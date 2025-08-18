@@ -395,6 +395,135 @@ _Priority: ${priority}_`
     this.saveProcessedEmails()
   }
 
+  // ADDED: Missing showBulkNotification method
+  async showBulkNotification(emails: Email[]): Promise<void> {
+    console.log(`[Notifications] Showing bulk notification for ${emails.length} high-priority emails`)
+
+    if (emails.length === 0) return
+
+    if (emails.length === 1) {
+      await this.showNotification(emails[0])
+      return
+    }
+
+    // For multiple emails, show a summary notification
+    const promises: Promise<void>[] = []
+
+    // Desktop notification for bulk
+    if (this.preferences.desktopEnabled && !this.isInQuietHours()) {
+      promises.push(this.showBulkDesktopNotification(emails))
+    }
+
+    // WhatsApp notification for bulk
+    if (this.preferences.whatsappEnabled && this.preferences.whatsappNumber) {
+      promises.push(this.sendBulkWhatsAppNotification(emails))
+    }
+
+    await Promise.allSettled(promises)
+  }
+
+  private async showBulkDesktopNotification(emails: Email[]): Promise<void> {
+    if (!("Notification" in window) || Notification.permission !== "granted") {
+      return
+    }
+
+    try {
+      const notification = new Notification(`${emails.length} new high-priority emails`, {
+        body: `New important emails from:\n${emails.slice(0, 3).map(e => e.from.split('<')[0].trim()).join(', ')}${emails.length > 3 ? '...' : ''}`,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: 'bulk-notification-' + Date.now(),
+        requireInteraction: true,
+        silent: !this.preferences.soundEnabled
+      })
+
+      notification.onclick = () => {
+        window.focus()
+        notification.close()
+      }
+    } catch (error) {
+      console.error('Failed to show bulk desktop notification:', error)
+    }
+  }
+
+  private async sendBulkWhatsAppNotification(emails: Email[]): Promise<void> {
+    try {
+      const message = `*MailSense*
+_Business Account_
+
+*${emails.length} New High-Priority Emails*
+
+${emails.slice(0, 5).map((email, index) => {
+  const fromName = email.from.split('<')[0].trim() || email.from
+  return `${index + 1}. *${fromName}*\n   ${email.subject.substring(0, 50)}${email.subject.length > 50 ? '...' : ''}`
+}).join('\n\n')}
+
+${emails.length > 5 ? `\n_...and ${emails.length - 5} more_` : ''}
+
+_All emails marked as HIGH priority_`
+      
+      console.log(`[WhatsApp] Sending bulk notification for ${emails.length} emails`)
+      
+      const response = await fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: this.preferences.whatsappNumber,
+          message: message
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.error || `HTTP ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log(`[WhatsApp] Bulk message sent successfully:`, result.id)
+    } catch (error: any) {
+      console.error('Failed to send bulk WhatsApp notification:', error)
+      throw new Error(`Failed to send bulk WhatsApp notification: ${error.message}`)
+    }
+  }
+
+  // ADDED: Missing processQueuedNotifications method
+  async processQueuedNotifications(): Promise<void> {
+    try {
+      const pendingEmails = EmailStorage.getPendingNotifications()
+      
+      if (pendingEmails.length === 0) {
+        return
+      }
+
+      console.log(`[Notifications] Processing ${pendingEmails.length} queued notifications`)
+      
+      for (const email of pendingEmails) {
+        if (this.shouldNotifyStored(email)) {
+          await this.showNotification(email)
+          EmailStorage.markNotificationSent(email.id)
+        }
+      }
+    } catch (error) {
+      console.error('Error processing queued notifications:', error)
+    }
+  }
+
+  private shouldNotifyStored(email: EmailSummary): boolean {
+    if (!this.preferences.enabled) {
+      return false
+    }
+
+    if (this.preferences.highPriorityOnly) {
+      if (email.priority !== "high" && !email.isImportant) {
+        return false
+      }
+    }
+
+    return true
+  }
+
   async triggerNotificationForEmail(emailId: string): Promise<void> {
     if (typeof window === 'undefined') return
     
