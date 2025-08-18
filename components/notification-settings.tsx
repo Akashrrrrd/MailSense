@@ -88,7 +88,15 @@ export function NotificationSettings() {
       console.error("Test notification error:", error)
       setWhatsappTestStatus("error")
 
-      if (error.message?.includes("Twilio credentials not configured")) {
+      if (error.message?.includes("Daily message limit reached") || error.message?.includes("TRIAL_LIMIT_EXCEEDED")) {
+        setWhatsappError(
+          "🚨 Twilio trial limit reached (9 messages/day). Upgrade to paid account for unlimited messages or wait until tomorrow."
+        )
+      } else if (error.message?.includes("Rate limit exceeded")) {
+        setWhatsappError(
+          "⏰ Rate limit exceeded. Please wait a few minutes before sending another test message."
+        )
+      } else if (error.message?.includes("Twilio credentials not configured")) {
         setWhatsappError(
           "Twilio credentials not configured. Please add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_NUMBER to your environment variables."
         )
@@ -301,137 +309,239 @@ export function NotificationSettings() {
         <CardHeader className="pb-3 sm:pb-4">
           <CardTitle className="flex items-center text-base sm:text-lg">
             <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600 flex-shrink-0" />
-            AI-Powered WhatsApp Notifications
+            WhatsApp Notifications
             <Badge variant="secondary" className="ml-2 text-xs">
               <Sparkles className="h-3 w-3 mr-1" />
               AI Enhanced
             </Badge>
           </CardTitle>
           <CardDescription className="text-xs sm:text-sm">
-            Receive ONLY high-priority email alerts (Gmail's important emails) with AI-generated summaries directly on
-            your WhatsApp instantly.
+            Get instant WhatsApp alerts for high-priority emails only. AI creates smart summaries so you know what's important without opening Gmail.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0 space-y-4 sm:space-y-6">
-          {/* WhatsApp Toggle */}
-          <div className="flex items-start justify-between space-x-4">
-            <div className="flex-1 min-w-0">
-              <Label htmlFor="whatsapp-enabled" className="text-sm sm:text-base font-medium cursor-pointer">
-                Enable AI WhatsApp Alerts
+          {/* Main Setup Section */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+            <h4 className="font-semibold text-green-900 mb-3 text-sm sm:text-base flex items-center">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Setup WhatsApp Alerts
+            </h4>
+            
+            {/* Step 1: Phone Number */}
+            <div className="space-y-3 mb-4">
+              <Label htmlFor="whatsapp-number" className="text-sm font-medium flex items-center">
+                <Phone className="h-4 w-4 mr-1" />
+                Step 1: Enter Your WhatsApp Number
               </Label>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                Send instant WhatsApp notifications with AI-generated 2-line summaries for high-priority emails only
+              <Input
+                id="whatsapp-number"
+                type="tel"
+                placeholder="+1234567890 (include country code)"
+                value={preferences.whatsappNumber}
+                onChange={(e) => handlePreferenceChange("whatsappNumber", formatPhoneNumber(e.target.value))}
+                className="font-mono h-12 text-base"
+              />
+              <p className="text-xs text-green-700">
+                📱 Use international format: +1 (US), +91 (India), +44 (UK), etc.
               </p>
             </div>
-            <Switch
-              id="whatsapp-enabled"
-              checked={preferences.whatsappEnabled}
-              onCheckedChange={(checked) => handlePreferenceChange("whatsappEnabled", checked)}
-              className="flex-shrink-0"
-            />
-          </div>
 
-          {preferences.whatsappEnabled && (
-            <>
-              {/* Phone Number Input */}
-              <div className="space-y-3">
-                <Label htmlFor="whatsapp-number" className="text-sm font-medium flex items-center">
-                  <Phone className="h-4 w-4 mr-1" />
-                  WhatsApp Number
+            {/* Step 2: Enable Toggle */}
+            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200">
+              <div className="flex-1">
+                <Label htmlFor="whatsapp-enabled" className="text-sm font-medium cursor-pointer">
+                  Step 2: Enable WhatsApp Notifications
                 </Label>
-                <Input
-                  id="whatsapp-number"
-                  type="tel"
-                  placeholder="+919655667171"
-                  value={preferences.whatsappNumber}
-                  onChange={(e) => handlePreferenceChange("whatsappNumber", formatPhoneNumber(e.target.value))}
-                  className="font-mono h-12 text-base"
-                />
-                <p className="text-xs text-gray-500">Include country code (e.g., +1 for US, +91 for India)</p>
-              </div>
-
-              {/* AI Features Info */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
-                <h4 className="font-medium text-purple-900 mb-2 text-sm sm:text-base flex items-center">
-                  <Sparkles className="h-4 w-4 mr-1" />
-                  AI-Enhanced WhatsApp Messages
-                </h4>
-                <ul className="text-xs sm:text-sm text-purple-800 space-y-1">
-                  <li>• AI analyzes email content and creates intelligent 2-line summaries</li>
-                  <li>• Professional message format: MailSense → From → Subject → AI Summary</li>
-                  <li>• Only HIGH priority emails (Gmail's important emails) trigger notifications</li>
-                  <li>• Instant delivery when important emails arrive in your Gmail</li>
-                  <li>• No spam from social media, promotions, or low-priority emails</li>
-                </ul>
-              </div>
-
-              {/* WhatsApp Behavior Info */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h4 className="font-medium text-green-900 mb-2 text-sm sm:text-base flex items-center">
-                  <MessageCircle className="h-4 w-4 mr-1" />
-                  Message Format Preview
-                </h4>
-                <div className="bg-white border rounded-lg p-3 font-mono text-xs">
-                  <div className="text-green-600 font-bold">*MailSense*</div>
-                  <div className="text-gray-500 italic">_Business Account_</div>
-                  <br />
-                  <div>
-                    <strong>From:</strong> TechCorp
-                  </div>
-                  <div>
-                    <strong>Sub:</strong> Final HR Interview - Software Engineer
-                  </div>
-                  <br />
-                  <div>
-                    <strong>Content:</strong>
-                  </div>
-                  <div>Final interview scheduled for tomorrow at 2 PM</div>
-                  <div>Prepare for technical questions on React and Node.js</div>
-                  <br />
-                  <div className="text-gray-500 italic">_Priority: HIGH_</div>
-                </div>
-              </div>
-
-              {/* Setup Instructions */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2 text-sm sm:text-base">Required Environment Variables</h4>
-                <p className="text-xs sm:text-sm text-blue-800 mb-3">
-                  Add these to your Vercel project for full functionality:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs font-medium text-blue-900 mb-1">Twilio WhatsApp:</p>
-                    <ul className="text-xs text-blue-700 space-y-1 font-mono">
-                      <li>• TWILIO_ACCOUNT_SID</li>
-                      <li>• TWILIO_AUTH_TOKEN</li>
-                      <li>• TWILIO_WHATSAPP_NUMBER</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-blue-900 mb-1">AI Summarization:</p>
-                    <ul className="text-xs text-blue-700 space-y-1 font-mono">
-                      <li>• PERPLEXITY_API_KEY</li>
-                    </ul>
-                  </div>
-                </div>
-                <p className="text-xs text-blue-600 mt-3">
-                  Get Twilio credentials from Twilio Console → WhatsApp → Senders
-                  <br />
-                  Get Perplexity API key from perplexity.ai → Settings → API
+                <p className="text-xs text-gray-600 mt-1">
+                  Only high-priority emails will trigger WhatsApp messages
                 </p>
               </div>
+              <Switch
+                id="whatsapp-enabled"
+                checked={preferences.whatsappEnabled}
+                onCheckedChange={(checked) => handlePreferenceChange("whatsappEnabled", checked)}
+                className="flex-shrink-0"
+              />
+            </div>
 
-              {/* WhatsApp Test Error Display */}
-              {whatsappError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
-                  <h4 className="font-medium text-red-900 mb-2 text-sm flex items-center">
-                    <MessageCircle className="h-4 w-4 mr-1" />
-                    AI WhatsApp Test Failed
-                  </h4>
-                  <p className="text-xs sm:text-sm text-red-800">{whatsappError}</p>
+            {/* Status Indicator */}
+            <div className="mt-3 p-3 bg-white rounded border border-green-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    preferences.whatsappEnabled && preferences.whatsappNumber 
+                      ? 'bg-green-500 animate-pulse' 
+                      : 'bg-gray-400'
+                  }`}></div>
+                  <span className="text-xs font-medium">
+                    {preferences.whatsappEnabled && preferences.whatsappNumber 
+                      ? '✅ WhatsApp notifications are ACTIVE' 
+                      : '⏸️ WhatsApp notifications are DISABLED'}
+                  </span>
+                </div>
+                {preferences.whatsappEnabled && preferences.whatsappNumber && (
+                  <span className="text-xs text-green-600 font-mono">
+                    📱 {preferences.whatsappNumber}
+                  </span>
+                )}
+              </div>
+              {preferences.whatsappEnabled && preferences.whatsappNumber && (
+                <div className="mt-2 text-xs text-green-700">
+                  🔄 Checking for new emails every minute • 🎯 High-priority emails only
                 </div>
               )}
-            </>
+            </div>
+          </div>
+
+          {/* How It Works */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-900 mb-2 text-sm sm:text-base flex items-center">
+              <Sparkles className="h-4 w-4 mr-1" />
+              How MailSense Works
+            </h4>
+            <div className="space-y-2 text-xs sm:text-sm text-blue-800">
+              <div className="flex items-start space-x-2">
+                <span className="font-bold text-blue-600">1.</span>
+                <span>You receive an email in Gmail</span>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="font-bold text-blue-600">2.</span>
+                <span>MailSense AI analyzes if it's high-priority (important)</span>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="font-bold text-blue-600">3.</span>
+                <span>If important, AI creates a smart 2-line summary</span>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="font-bold text-blue-600">4.</span>
+                <span>You get instant WhatsApp notification with summary</span>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="font-bold text-blue-600">5.</span>
+                <span>No spam - only truly important emails reach your phone</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Message Preview */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h4 className="font-medium text-gray-900 mb-3 text-sm sm:text-base flex items-center">
+              <MessageCircle className="h-4 w-4 mr-1" />
+              WhatsApp Message Preview
+            </h4>
+            <div className="bg-white border rounded-lg p-3 font-mono text-xs shadow-sm">
+              <div className="text-green-600 font-bold">🔔 MailSense Alert</div>
+              <div className="text-gray-500 italic">High Priority Email</div>
+              <div className="my-2 border-t border-gray-200"></div>
+              <div><strong>From:</strong> HR Team (company.com)</div>
+              <div><strong>Subject:</strong> Interview Confirmation - Software Engineer</div>
+              <div className="my-2 border-t border-gray-200"></div>
+              <div><strong>AI Summary:</strong></div>
+              <div className="text-gray-700">Your final interview is scheduled for tomorrow at 2 PM.</div>
+              <div className="text-gray-700">Please prepare technical questions on React and APIs.</div>
+              <div className="my-2 border-t border-gray-200"></div>
+              <div className="text-gray-500 italic text-xs">Priority: HIGH | Powered by MailSense AI</div>
+            </div>
+          </div>
+
+          {/* Test Section */}
+          {preferences.whatsappEnabled && preferences.whatsappNumber && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h4 className="font-medium text-yellow-900 mb-3 text-sm sm:text-base flex items-center">
+                <Sparkles className="h-4 w-4 mr-1" />
+                Test Your Setup
+              </h4>
+              
+              {availableEmails.length > 0 && (
+                <div className="space-y-3 mb-4">
+                  <Label className="text-sm font-medium">Select a high-priority email to test with:</Label>
+                  <Select value={selectedEmailForTest} onValueChange={setSelectedEmailForTest}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose an email for testing" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableEmails.map((email) => (
+                        <SelectItem key={email.id} value={email.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{email.subject.substring(0, 50)}...</span>
+                            <span className="text-xs text-gray-500">From: {email.from.split('<')[0].trim()}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  onClick={sendTestNotification}
+                  disabled={testNotificationSent || whatsappTestStatus === "sending"}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 sm:flex-none min-h-[44px] bg-white border-yellow-300 hover:bg-yellow-50"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {whatsappTestStatus === "sending"
+                    ? "Sending Test..."
+                    : whatsappTestStatus === "success"
+                    ? "✅ Test Sent!"
+                    : whatsappTestStatus === "error"
+                    ? "❌ Test Failed"
+                    : "📱 Send Test WhatsApp"}
+                </Button>
+                
+                <Button
+                  onClick={loadAvailableEmails}
+                  variant="ghost"
+                  size="sm"
+                  className="min-h-[44px] hover:bg-yellow-50"
+                >
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Refresh
+                </Button>
+              </div>
+
+              <p className="text-xs text-yellow-700 mt-2">
+                💡 Test will send a real WhatsApp message to {preferences.whatsappNumber}
+              </p>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {whatsappError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 className="font-medium text-red-900 mb-2 text-sm flex items-center">
+                <MessageCircle className="h-4 w-4 mr-1" />
+                ❌ WhatsApp Test Failed
+              </h4>
+              <p className="text-xs sm:text-sm text-red-800 mb-3">{whatsappError}</p>
+              <div className="text-xs text-red-700">
+                <strong>Common solutions:</strong>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Check your phone number format (+1234567890)</li>
+                  <li>Ensure Twilio credentials are configured</li>
+                  <li>Verify your WhatsApp number is registered</li>
+                  <li>Try refreshing and testing again</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {whatsappTestStatus === "success" && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="font-medium text-green-900 mb-2 text-sm flex items-center">
+                <MessageCircle className="h-4 w-4 mr-1" />
+                ✅ Test Successful!
+              </h4>
+              <p className="text-xs sm:text-sm text-green-800">
+                WhatsApp notification sent successfully! Check your phone for the test message.
+              </p>
+              <p className="text-xs text-green-700 mt-2">
+                🎉 Your MailSense setup is working perfectly. You'll now receive WhatsApp alerts for high-priority emails.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>

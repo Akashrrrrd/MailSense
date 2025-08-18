@@ -126,6 +126,35 @@ export async function POST(request: NextRequest) {
             { error: "Bad request", details: errorText },
             { status: 400 }
           )
+        } else if (response.status === 429) {
+          // Handle rate limiting
+          const isTrialLimit = errorText.includes('daily messages limit') || errorText.includes('63038')
+          
+          if (isTrialLimit) {
+            return NextResponse.json(
+              { 
+                error: "Daily message limit reached", 
+                details: "Twilio trial account has reached the 9 messages/day limit.",
+                code: "TRIAL_LIMIT_EXCEEDED",
+                solutions: [
+                  "Upgrade to Twilio paid account for unlimited messages",
+                  "Wait until tomorrow (limit resets at midnight UTC)",
+                  "Use a different Twilio account for testing"
+                ],
+                upgradeUrl: "https://console.twilio.com/billing"
+              },
+              { status: 429 }
+            )
+          } else {
+            return NextResponse.json(
+              { 
+                error: "Rate limit exceeded", 
+                details: "Too many requests. Please wait before sending another message.",
+                code: "RATE_LIMIT_EXCEEDED"
+              },
+              { status: 429 }
+            )
+          }
         }
         
         return NextResponse.json(

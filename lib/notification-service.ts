@@ -1,4 +1,6 @@
 // lib/notification-service.ts - Fixed version with proper high-priority email testing
+import type { EmailSummary } from "@/lib/gmail-api"
+import { EmailStorage } from "@/lib/email-storage"
 
 export interface Email {
   id: string
@@ -236,27 +238,243 @@ class NotificationService {
   }
 
   private createFallbackSummary(email: Email): string {
-    const words = email.snippet.split(' ')
-    const firstLine = words.slice(0, 8).join(' ')
-    const secondLine = words.slice(8, 16).join(' ')
+    const senderName = this.extractSenderName(email.from)
+    const subject = email.subject.toLowerCase()
+    const content = email.body || email.snippet
     
-    return `${firstLine}${firstLine.length < email.snippet.length ? '...' : ''}\n${secondLine}${words.length > 16 ? '...' : ''}`
+    // Smart fallback based on email type and sender
+    if (this.isJobAlert(email)) {
+      return this.createJobAlertSummary(email)
+    } else if (this.isSecurityAlert(email)) {
+      return this.createSecurityAlertSummary(email)
+    } else if (this.isNewsletterOrPromo(email)) {
+      return this.createNewsletterSummary(email)
+    } else if (this.isMeetingOrCalendar(email)) {
+      return this.createMeetingSummary(email)
+    }
+    
+    // Try to extract clean content
+    const cleanContent = this.extractCleanContent(content)
+    const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 15)
+    
+    if (sentences.length >= 2) {
+      const firstLine = this.cleanLine(sentences[0])
+      const secondLine = this.cleanLine(sentences[1])
+      
+      if (firstLine.length > 10 && secondLine.length > 10) {
+        return `${firstLine}\n${secondLine}`
+      }
+    }
+    
+    // Generic fallback based on sender and subject
+    return this.createGenericSummary(email)
+  }
+
+  private isJobAlert(email: Email): boolean {
+    const indicators = ['indeed', 'linkedin jobs', 'job alert', 'career', 'hiring', 'apply to jobs']
+    const text = `${email.from} ${email.subject}`.toLowerCase()
+    return indicators.some(indicator => text.includes(indicator))
+  }
+
+  private isSecurityAlert(email: Email): boolean {
+    const indicators = ['security', 'alert', 'suspicious', 'login', 'password', 'verification']
+    const text = `${email.from} ${email.subject}`.toLowerCase()
+    return indicators.some(indicator => text.includes(indicator))
+  }
+
+  private isNewsletterOrPromo(email: Email): boolean {
+    const indicators = ['newsletter', 'unsubscribe', 'promotion', 'deal', 'offer', 'sale']
+    const text = `${email.from} ${email.subject}`.toLowerCase()
+    return indicators.some(indicator => text.includes(indicator))
+  }
+
+  private isMeetingOrCalendar(email: Email): boolean {
+    const indicators = ['meeting', 'calendar', 'invitation', 'appointment', 'schedule', 'zoom', 'teams']
+    const text = `${email.from} ${email.subject}`.toLowerCase()
+    return indicators.some(indicator => text.includes(indicator))
+  }
+
+  private createJobAlertSummary(email: Email): string {
+    const senderName = this.extractSenderName(email.from)
+    
+    // Extract job count if possible
+    const content = email.body || email.snippet
+    const jobCountMatch = content.match(/(\d+)\s+(?:new\s+)?(?:job|position|opening)/i)
+    const jobCount = jobCountMatch ? jobCountMatch[1] : 'New'
+    
+    // Extract location if possible
+    const locationMatch = content.match(/(?:in|at)\s+([A-Za-z\s,]+?)(?:\s|,|$)/i)
+    const location = locationMatch ? locationMatch[1].trim().split(',')[0] : 'your area'
+    
+    return `${jobCount} job opportunities available from ${senderName}\nCheck positions in ${location} and apply directly`
+  }
+
+  private createSecurityAlertSummary(email: Email): string {
+    const senderName = this.extractSenderName(email.from)
+    return `Security notification from ${senderName}\nPlease review your account activity and settings`
+  }
+
+  private createNewsletterSummary(email: Email): string {
+    const senderName = this.extractSenderName(email.from)
+    return `Newsletter update from ${senderName}\nCheck latest news and updates in your email`
+  }
+
+  private createMeetingSummary(email: Email): string {
+    const senderName = this.extractSenderName(email.from)
+    return `Meeting or calendar update from ${senderName}\nPlease check for schedule changes or new appointments`
+  }
+
+  private createGenericSummary(email: Email): string {
+    const senderName = this.extractSenderName(email.from)
+    const subject = email.subject.length > 50 ? email.subject.substring(0, 47) + '...' : email.subject
+    return `Important email from ${senderName}\nSubject: ${subject}`
+  }
+
+  private extractCleanContent(content: string): string {
+    return content
+      .replace(/\[image:.*?\]/gi, '') // Remove image references
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
+      .replace(/utm_[^&\s]+/g, '') // Remove UTM parameters
+      .replace(/[?&][a-zA-Z0-9_]+=[\w%.-]+/g, '') // Remove URL parameters
+      .replace(/\b[A-Z0-9]{10,}\b/g, '') // Remove long codes
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim()
   }
 
   private formatWhatsAppMessage(email: Email, aiSummary: string): string {
-    const fromName = email.from.split('<')[0].trim() || email.from
-    const priority = email.priority.toUpperCase()
+    const fromName = this.extractSenderName(email.from)
+    const fromDomain = this.extractDomain(email.from)
+    const timeAgo = this.getTimeAgo(email.date)
     
-    return `*MailSense*
-_Business Account_
+    // Clean up AI summary - if it's messy, use smart fallback
+    let cleanSummary = this.cleanAISummary(aiSummary)
+    
+    // If AI summary is null/messy, use intelligent fallback
+    if (!cleanSummary) {
+      cleanSummary = this.createFallbackSummary(email)
+    }
+    
+    return `*From:* ${fromName}${fromDomain ? ` (${fromDomain})` : ''}
+*Subject:* ${email.subject}
+*Received:* ${timeAgo}
 
-*From:* ${fromName}
-*Sub:* ${email.subject}
+*AI Summary:*
+${cleanSummary}
 
-*Content:*
-${aiSummary}
+_Powered by MailSense AI_`
+  }
 
-_Priority: ${priority}_`
+  private cleanAISummary(summary: string): string {
+    // Aggressive cleaning for messy email content
+    let cleaned = summary
+      .replace(/\[image:.*?\]/gi, '') // Remove [image: ...] references
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
+      .replace(/utm_[^&\s]+/g, '') // Remove UTM parameters
+      .replace(/[?&][a-zA-Z0-9_]+=[\w%.-]+/g, '') // Remove URL parameters
+      .replace(/\b[A-Z0-9]{10,}\b/g, '') // Remove long alphanumeric codes
+      .replace(/\.\.\./g, '') // Remove ellipsis
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .replace(/[^\w\s.,!?-]/g, ' ') // Remove special characters except basic punctuation
+      .trim()
+    
+    // If the cleaned content is still messy or too short, return null to trigger fallback
+    if (cleaned.length < 20 || this.isMessyContent(cleaned)) {
+      return null
+    }
+    
+    // Split into lines and ensure we have exactly 2 meaningful lines
+    const lines = cleaned.split('\n').filter(line => line.trim().length > 10)
+    
+    if (lines.length >= 2) {
+      // Use first two lines, ensure they're complete
+      const line1 = this.cleanLine(lines[0])
+      const line2 = this.cleanLine(lines[1])
+      return `${line1}\n${line2}`
+    } else if (lines.length === 1 && lines[0].length > 20) {
+      // Split single line into two parts
+      const words = lines[0].split(' ')
+      if (words.length >= 6) {
+        const midPoint = Math.ceil(words.length / 2)
+        const line1 = words.slice(0, midPoint).join(' ')
+        const line2 = words.slice(midPoint).join(' ')
+        return `${line1}\n${line2}`
+      }
+    }
+    
+    // Content is too messy or short, return null to trigger smart fallback
+    return null
+  }
+
+  private isMessyContent(content: string): boolean {
+    // Check if content contains too many technical artifacts
+    const messyPatterns = [
+      /[?&=]{3,}/, // Multiple URL parameter characters
+      /\b[A-Z0-9]{8,}\b.*\b[A-Z0-9]{8,}\b/, // Multiple long codes
+      /utm_|tmtk=|alid=/, // Tracking parameters
+      /\b\w+%\d+/, // URL encoded content
+      /(?:%[0-9A-F]{2}){3,}/, // Multiple URL encoded sequences (fixed regex)
+    ]
+    
+    return messyPatterns.some(pattern => pattern.test(content))
+  }
+
+  private cleanLine(line: string): string {
+    return line
+      .trim()
+      .replace(/\s+/g, ' ')
+      .substring(0, 80) // Reasonable max length
+      .trim()
+  }
+
+  private extractSenderName(from: string): string {
+    // Extract clean sender name
+    const nameMatch = from.match(/^(.+?)\s*</) || from.match(/^([^@]+)/)
+    if (nameMatch) {
+      return nameMatch[1].replace(/"/g, '').trim()
+    }
+    return from.split('@')[0] || 'Unknown Sender'
+  }
+
+  private extractDomain(from: string): string {
+    // Extract domain for context
+    const emailMatch = from.match(/<(.+)>/) || from.match(/(.+@.+)/)
+    if (emailMatch) {
+      const email = emailMatch[1] || emailMatch[0]
+      const domain = email.split('@')[1]
+      if (domain) {
+        // Clean up common domains
+        if (domain.includes('gmail.com')) return 'Gmail'
+        if (domain.includes('outlook.com') || domain.includes('hotmail.com')) return 'Outlook'
+        if (domain.includes('yahoo.com')) return 'Yahoo'
+        return domain.split('.')[0]
+      }
+    }
+    return ''
+  }
+
+  private getTimeAgo(date: Date | string): string {
+    const now = new Date()
+    const emailDate = typeof date === 'string' ? new Date(date) : date
+    
+    // Handle invalid dates
+    if (isNaN(emailDate.getTime())) {
+      return 'Recently'
+    }
+    
+    const diffInMinutes = Math.floor((now.getTime() - emailDate.getTime()) / (1000 * 60))
+    
+    if (diffInMinutes < 1) return 'Just now'
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+    
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) return `${diffInHours}h ago`
+    
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) return `${diffInDays}d ago`
+    
+    return emailDate.toLocaleDateString()
   }
 
   private isInQuietHours(): boolean {
@@ -309,8 +527,14 @@ _Priority: ${priority}_`
         return null
       }
       
+      // Normalize emails to ensure dates are Date objects
+      const normalizedEmails = emails.map(email => ({
+        ...email,
+        date: typeof email.date === 'string' ? new Date(email.date) : email.date
+      }))
+      
       // Filter for high-priority emails ONLY
-      const highPriorityEmails = emails.filter(email => {
+      const highPriorityEmails = normalizedEmails.filter(email => {
         const isHighPriority = email.priority === "high" || email.isImportant === true
         console.log(`[Test] Email "${email.subject}" - Priority: ${email.priority}, Important: ${email.isImportant}, IsHighPriority: ${isHighPriority}`)
         return isHighPriority
@@ -448,19 +672,24 @@ _Priority: ${priority}_`
 
   private async sendBulkWhatsAppNotification(emails: Email[]): Promise<void> {
     try {
-      const message = `*MailSense*
-_Business Account_
+      const message = `🔔 *MailSense Alert*
+_Multiple High Priority Emails_
 
-*${emails.length} New High-Priority Emails*
+*${emails.length} Important Emails Received*
 
 ${emails.slice(0, 5).map((email, index) => {
-  const fromName = email.from.split('<')[0].trim() || email.from
-  return `${index + 1}. *${fromName}*\n   ${email.subject.substring(0, 50)}${email.subject.length > 50 ? '...' : ''}`
+  const fromName = this.extractSenderName(email.from)
+  const fromDomain = this.extractDomain(email.from)
+  const timeAgo = this.getTimeAgo(email.date)
+  return `${index + 1}. *${fromName}*${fromDomain ? ` (${fromDomain})` : ''}
+   📧 ${email.subject.substring(0, 45)}${email.subject.length > 45 ? '...' : ''}
+   ⏰ ${timeAgo}`
 }).join('\n\n')}
 
-${emails.length > 5 ? `\n_...and ${emails.length - 5} more_` : ''}
+${emails.length > 5 ? `\n_...and ${emails.length - 5} more important emails_` : ''}
 
-_All emails marked as HIGH priority_`
+_All emails classified as HIGH priority by MailSense AI_
+_Check your Gmail or MailSense dashboard for details_`
       
       console.log(`[WhatsApp] Sending bulk notification for ${emails.length} emails`)
       
@@ -552,15 +781,21 @@ _All emails marked as HIGH priority_`
         throw new Error('Email not found in storage')
       }
       
+      // Normalize the email date to ensure it's a Date object
+      const normalizedEmail = {
+        ...email,
+        date: typeof email.date === 'string' ? new Date(email.date) : email.date
+      }
+      
       // Verify it's actually high priority
-      if (email.priority !== "high" && !email.isImportant) {
+      if (normalizedEmail.priority !== "high" && !normalizedEmail.isImportant) {
         throw new Error('Selected email is not high priority. Please select a high-priority email for testing.')
       }
       
       // Force notification even if already processed
-      this.processedEmails.delete(email.id)
-      await this.showNotification(email)
-      this.processedEmails.add(email.id)
+      this.processedEmails.delete(normalizedEmail.id)
+      await this.showNotification(normalizedEmail)
+      this.processedEmails.add(normalizedEmail.id)
       this.saveProcessedEmails()
     } catch (error) {
       console.error('Failed to trigger notification for email:', error)

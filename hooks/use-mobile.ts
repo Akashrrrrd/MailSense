@@ -1,19 +1,45 @@
-import * as React from "react"
+"use client"
 
-const MOBILE_BREAKPOINT = 768
+import { useState, useEffect } from "react"
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+export function useMobile() {
+  const [isMobile, setIsMobile] = useState(false)
 
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768)
     }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
+
+    // Check on mount
+    checkIsMobile()
+
+    // Add event listener
+    window.addEventListener('resize', checkIsMobile)
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
 
-  return !!isMobile
+  return isMobile
+}
+
+export function useBreakpoint() {
+  const [breakpoint, setBreakpoint] = useState<'sm' | 'md' | 'lg' | 'xl' | '2xl'>('sm')
+
+  useEffect(() => {
+    const updateBreakpoint = () => {
+      const width = window.innerWidth
+      if (width >= 1536) setBreakpoint('2xl')
+      else if (width >= 1280) setBreakpoint('xl')
+      else if (width >= 1024) setBreakpoint('lg')
+      else if (width >= 768) setBreakpoint('md')
+      else setBreakpoint('sm')
+    }
+
+    updateBreakpoint()
+    window.addEventListener('resize', updateBreakpoint)
+    return () => window.removeEventListener('resize', updateBreakpoint)
+  }, [])
+
+  return breakpoint
 }

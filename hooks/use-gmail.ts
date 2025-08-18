@@ -32,21 +32,46 @@ export function useGmail(): UseGmailReturn {
 
   const classifier = new EmailClassifier()
 
+  // Load stored emails on mount
   useEffect(() => {
     const stored = EmailStorage.getStoredEmails()
     setStoredImportantEmails(stored)
   }, [])
 
-  // Test Gmail connection on mount
-  useEffect(() => {
-    if (user && getAccessToken()) {
-      testGmailConnection()
+  const loadCachedEmails = () => {
+    try {
+      const cachedEmails = localStorage.getItem('mailsense-emails')
+      const lastFetch = localStorage.getItem('mailsense-last-fetch')
+      
+      if (cachedEmails && lastFetch) {
+        const emails = JSON.parse(cachedEmails).map((email: any) => ({
+          ...email,
+          date: new Date(email.date) // Ensure dates are Date objects
+        }))
+        
+        console.log(`[useGmail] Loaded ${emails.length} cached emails`)
+        setEmails(emails)
+        setLastFetchTime(parseInt(lastFetch))
+        
+        // Show cache age to user
+        const cacheAge = Math.round((Date.now() - parseInt(lastFetch)) / 1000)
+        if (cacheAge < 60) {
+          console.log(`[useGmail] Cache is ${cacheAge} seconds old`)
+        } else {
+          console.log(`[useGmail] Cache is ${Math.round(cacheAge / 60)} minutes old`)
+        }
+      }
+    } catch (error) {
+      console.error('[useGmail] Failed to load cached emails:', error)
     }
-  }, [user, getAccessToken])
+  }
 
   const testGmailConnection = async () => {
-    const accessToken = getAccessToken()
-    if (!accessToken) return
+    const accessToken = await getAccessToken()
+    if (!accessToken) {
+      setConnectionStatus('failed')
+      return
+    }
 
     setConnectionStatus('testing')
     try {
@@ -65,9 +90,10 @@ export function useGmail(): UseGmailReturn {
       return
     }
 
-    const accessToken = getAccessToken()
+    const accessToken = await getAccessToken()
     if (!accessToken) {
-      setError("No access token available. Please sign in again.")
+      setError("Gmail access expired. Please sign out and sign in again to reconnect.")
+      setConnectionStatus('failed')
       return
     }
 
@@ -77,11 +103,13 @@ export function useGmail(): UseGmailReturn {
     try {
       console.log('[useGmail] Starting email fetch...')
       const gmailAPI = new GmailAPI(accessToken)
-      
+
       // Test connection first
       const connectionOk = await gmailAPI.testConnection()
       if (!connectionOk) {
-        throw new Error('Gmail connection failed. Please check your authentication.')
+        // Clear potentially invalid token
+        localStorage.removeItem("gmail_access_token")
+        throw new Error('Gmail authentication failed. Please sign out and sign in again to grant Gmail permissions.')
       }
 
       const rawEmails = await gmailAPI.fetchEmails(50)
@@ -105,12 +133,12 @@ export function useGmail(): UseGmailReturn {
       console.log(`[useGmail] Parsed ${parsedEmails.length} emails`)
 
       // Store important emails
-      const importantEmails = parsedEmails.filter((email) => 
+      const importantEmails = parsedEmails.filter((email) =>
         email.priority === "high" || email.isImportant
       )
-      
+
       console.log(`[useGmail] Found ${importantEmails.length} important emails`)
-      
+
       importantEmails.forEach((email) => {
         EmailStorage.storeImportantEmail(email)
       })
@@ -121,57 +149,131 @@ export function useGmail(): UseGmailReturn {
 
       // Handle new email notifications
       const currentTime = Date.now()
+
+      // For first load, don't send notifications for existing emails
+      if (lastFetchTime === 0) {
+        console.log('[useGmail] First load - not sending notifications for existing emails')
+        setEmails(parsedEmails)
+        setLastFetchTime(currentTime)
+        setConnectionStatus('connected')
+        return
+      }
+
+      // Process new emails for notifications
       const newEmails = parsedEmails.filter((email) => email.date.getTime() > lastFetchTime)
 
       if (newEmails.length > 0) {
-        console.log(`[useGmail] Found ${newEmails.length} new emails`)
-        const newHighPriorityEmails = newEmails.filter((email) => 
-          email.priority === "high" || email.isImportant
-        )
+        console.log(`[useGmail] Found ${newEmails.length} new emails since last fetch`)
 
-        if (newHighPriorityEmails.length > 0) {
-          console.log(`[useGmail] Sending notifications for ${newHighPriorityEmails.length} high-priority emails`)
+        // Convert to notification service format and process
+        const emailsForNotification = newEmails.map(email => ({
+          ...email,
+          body: email.snippet, // Use snippet as body for notifications
+        }))
+
+        // Process all new emails through notification service
+        await notificationService.processNewEmails(emailsForNotification)
+        
+        // Show immediate browser notification for high-priority emails
+        const highPriorityNewEmails = newEmails.filter(email => 
+          email.priority === 'high' || email.isImportant
+        )
+        
+        if (highPriorityNewEmails.length > 0) {
+          console.log(`[useGmail] ${highPriorityNewEmails.length} new high-priority emails - showing immediate notification`)
           
-          if (newHighPriorityEmails.length === 1) {
-            await notificationService.showNotification(newHighPriorityEmails[0])
-          } else {
-            // Use the fixed showBulkNotification method
-            await notificationService.showBulkNotification(newHighPriorityEmails)
+          // Show browser notification for immediate feedback
+          if ('Notification' in window && Notification.permission === 'granted') {
+            if (highPriorityNewEmails.length === 1) {
+              const email = highPriorityNewEmails[0]
+              new Notification(`📧 New High-Priority Email`, {
+                body: `From: ${email.from.split('<')[0].trim()}\n${email.subject}`,
+                icon: '/favicon.ico',
+                tag: 'mailsense-new-email',
+                requireInteraction: true
+              })
+            } else {
+              new Notification(`📧 ${highPriorityNewEmails.length} New High-Priority Emails`, {
+                body: `Check MailSense for important emails`,
+                icon: '/favicon.ico',
+                tag: 'mailsense-bulk-emails',
+                requireInteraction: true
+              })
+            }
           }
         }
+      }
+
+      // Store emails in localStorage for persistence between page navigations
+      try {
+        localStorage.setItem('mailsense-emails', JSON.stringify(parsedEmails))
+        localStorage.setItem('mailsense-last-fetch', currentTime.toString())
+      } catch (error) {
+        console.error('Failed to store emails in localStorage:', error)
       }
 
       setEmails(parsedEmails)
       setLastFetchTime(currentTime)
       setConnectionStatus('connected')
-      
+
     } catch (err: any) {
       console.error("Error fetching emails:", err)
-      
+
       // Handle specific error types
       let errorMessage = "Failed to fetch emails"
-      
-      if (err.message?.includes('token expired') || err.message?.includes('401')) {
-        errorMessage = "Gmail access expired. Please sign in again."
+
+      if (err.message?.includes('token expired') || err.message?.includes('401') || err.message?.includes('authentication failed')) {
+        errorMessage = "Gmail access expired or invalid. Please sign out and sign in again to reconnect Gmail."
         setConnectionStatus('failed')
+        // Clear invalid token
+        localStorage.removeItem("gmail_access_token")
       } else if (err.message?.includes('Network error') || err.message?.includes('Failed to fetch')) {
         errorMessage = "Network error. Please check your internet connection and try again."
       } else if (err.message?.includes('403')) {
-        errorMessage = "Gmail access denied. Please check your permissions."
+        errorMessage = "Gmail access denied. Please sign out and sign in again to grant proper permissions."
         setConnectionStatus('failed')
+        // Clear invalid token
+        localStorage.removeItem("gmail_access_token")
       } else if (err.message) {
         errorMessage = err.message
       }
-      
+
       setError(errorMessage)
     } finally {
       setLoading(false)
     }
   }, [user, getAccessToken, classifier, lastFetchTime])
 
+  // Load cached emails on mount and only fetch if cache is stale
+  useEffect(() => {
+    if (user) {
+      // Load cached emails immediately for fast UI
+      loadCachedEmails()
+      
+      // Test connection and fetch fresh emails if needed
+      const initializeGmail = async () => {
+        await testGmailConnection()
+        
+        // Only fetch if cache is stale (older than 2 minutes)
+        const lastFetch = localStorage.getItem('mailsense-last-fetch')
+        const cacheAge = lastFetch ? Date.now() - parseInt(lastFetch) : Infinity
+        const CACHE_DURATION = 2 * 60 * 1000 // 2 minutes
+        
+        if (cacheAge > CACHE_DURATION) {
+          console.log('[useGmail] Cache is stale, fetching fresh emails...')
+          await fetchEmails()
+        } else {
+          console.log('[useGmail] Using cached emails, cache age:', Math.round(cacheAge / 1000), 'seconds')
+        }
+      }
+      
+      initializeGmail()
+    }
+  }, [user]) // Removed fetchEmails from dependencies to prevent re-fetching
+
   const markAsRead = useCallback(
     async (emailId: string): Promise<boolean> => {
-      const accessToken = getAccessToken()
+      const accessToken = await getAccessToken()
       if (!accessToken) {
         console.error('No access token for marking as read')
         return false
@@ -207,25 +309,69 @@ export function useGmail(): UseGmailReturn {
     )
   }, [classifier])
 
-  // Auto-refresh emails periodically
+  // Smart auto-refresh with dynamic frequency based on WhatsApp notifications
   useEffect(() => {
     if (!user || connectionStatus === 'failed') return
 
-    const interval = setInterval(
-      async () => {
-        console.log('[useGmail] Auto-refreshing emails...')
-        try {
-          await notificationService.processQueuedNotifications()
-          await fetchEmails()
-        } catch (error) {
-          console.error('[useGmail] Auto-refresh failed:', error)
-        }
-      },
-      2 * 60 * 1000, // Every 2 minutes
-    )
+    let interval: NodeJS.Timeout
 
-    return () => clearInterval(interval)
-  }, [user, fetchEmails, connectionStatus])
+    const startAutoRefresh = () => {
+      // Check if WhatsApp notifications are enabled for more frequent checks
+      const preferences = notificationService.getPreferences()
+      const isWhatsAppEnabled = preferences.whatsappEnabled && preferences.whatsappNumber
+      
+      // More frequent checks if WhatsApp is enabled (1 minute vs 2 minutes)
+      const refreshInterval = isWhatsAppEnabled ? 1 * 60 * 1000 : 2 * 60 * 1000
+      
+      console.log(`[useGmail] Starting auto-refresh every ${refreshInterval / 1000} seconds (WhatsApp: ${isWhatsAppEnabled ? 'enabled' : 'disabled'})`)
+      
+      interval = setInterval(
+        async () => {
+          // Only auto-refresh if document is visible (tab is active)
+          if (document.visibilityState === 'visible') {
+            console.log('[useGmail] Auto-refreshing emails (tab active)...')
+            try {
+              await notificationService.processQueuedNotifications()
+              await fetchEmails()
+            } catch (error) {
+              console.error('[useGmail] Auto-refresh failed:', error)
+            }
+          } else {
+            // Even when tab is not active, still check for new emails if WhatsApp is enabled
+            if (isWhatsAppEnabled) {
+              console.log('[useGmail] Background check for WhatsApp notifications...')
+              try {
+                await fetchEmails()
+              } catch (error) {
+                console.error('[useGmail] Background check failed:', error)
+              }
+            } else {
+              console.log('[useGmail] Skipping auto-refresh (tab not active, WhatsApp disabled)')
+            }
+          }
+        },
+        refreshInterval
+      )
+    }
+
+    // Start auto-refresh
+    startAutoRefresh()
+
+    // Pause/resume auto-refresh based on tab visibility
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[useGmail] Tab became active - resuming auto-refresh')
+        if (!interval) startAutoRefresh()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      if (interval) clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [user, connectionStatus]) // Removed fetchEmails from dependencies
 
   // Cleanup old emails periodically
   useEffect(() => {

@@ -24,6 +24,18 @@ const navigation = [
   },
 ]
 
+// Public navigation for non-authenticated users
+export const publicNavigation = [
+  {
+    name: "How It Works",
+    href: "/how-it-works",
+  },
+  {
+    name: "Privacy",
+    href: "/privacy",
+  },
+]
+
 export function Navigation() {
   const pathname = usePathname()
 

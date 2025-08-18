@@ -3,15 +3,70 @@
 import { useAuth } from "@/hooks/use-auth"
 import { useGmail } from "@/hooks/use-gmail"
 import { AuthGuard } from "@/components/auth-guard"
-import { ClassificationInsights } from "@/components/classification-insights"
+import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Brain, BarChart3, TrendingUp } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, BarChart3, TrendingUp, Brain, Zap, Mail, Clock, User, Target } from "lucide-react"
 import Link from "next/link"
+import { EmailClassifier } from "@/lib/ai-classifier"
+import { useMemo } from "react"
 
 export default function InsightsPage() {
-  const { user } = useAuth()
-  const { emails, loading, error, refreshEmails } = useGmail()
+  const { user, logout } = useAuth()
+  const { emails, loading, highPriorityEmails, unreadCount, totalCount } = useGmail()
+
+  const classifier = new EmailClassifier()
+  
+  const insights = useMemo(() => {
+    if (emails.length === 0) return null
+
+    const stats = classifier.getClassificationStats(emails)
+    const emailsByPriority = classifier.getEmailsByPriority(emails)
+    
+    // Calculate additional insights
+    const readRate = totalCount > 0 ? Math.round(((totalCount - unreadCount) / totalCount) * 100) : 0
+    const highPriorityRate = totalCount > 0 ? Math.round((stats.high / totalCount) * 100) : 0
+    const avgEmailsPerDay = Math.round(totalCount / 7) // Assuming last 7 days of data
+    
+    // Time-based analysis
+    const emailsByHour = emails.reduce((acc, email) => {
+      const hour = email.date.getHours()
+      acc[hour] = (acc[hour] || 0) + 1
+      return acc
+    }, {} as Record<number, number>)
+    
+    const peakHour = Object.entries(emailsByHour).reduce((a, b) => 
+      emailsByHour[parseInt(a[0])] > emailsByHour[parseInt(b[0])] ? a : b
+    )[0]
+
+    // Sender analysis
+    const senderCounts = emails.reduce((acc, email) => {
+      const sender = email.from.split('<')[0].trim() || email.from.split('@')[0]
+      acc[sender] = (acc[sender] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+    
+    const topSenders = Object.entries(senderCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+
+    return {
+      stats,
+      emailsByPriority,
+      readRate,
+      highPriorityRate,
+      avgEmailsPerDay,
+      peakHour: parseInt(peakHour),
+      topSenders
+    }
+  }, [emails, totalCount, unreadCount, classifier])
+
+  const formatHour = (hour: number) => {
+    const period = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    return `${displayHour}:00 ${period}`
+  }
 
   return (
     <AuthGuard requireAuth={true}>
@@ -28,113 +83,222 @@ export default function InsightsPage() {
               </Link>
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center">
-                  <Brain className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-blue-600 flex-shrink-0" />
-                  <span className="truncate">AI Classification Insights</span>
+                  <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-blue-600 flex-shrink-0" />
+                  <span className="truncate">Email Insights</span>
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600">
-                  Deep analysis of your email patterns and AI performance
+                  AI-powered analytics for your email patterns
                 </p>
               </div>
             </div>
-            <Button
-              onClick={refreshEmails}
-              disabled={loading}
-              variant="outline"
-              className="w-full sm:w-auto bg-transparent min-h-[36px]"
-            >
-              <span className="text-xs sm:text-sm">{loading ? "Refreshing..." : "Refresh Data"}</span>
-            </Button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 lg:space-x-4 w-full sm:w-auto">
+              <div className="hidden sm:block">
+                <Navigation />
+              </div>
+              <Button onClick={logout} variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
+                Sign Out
+              </Button>
+            </div>
           </div>
 
-          {/* Content */}
-          {error ? (
-            <Card>
-              <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="text-red-600 text-base sm:text-lg">Error Loading Data</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">{error}</p>
-                <Button onClick={refreshEmails} variant="outline" className="w-full sm:w-auto bg-transparent">
-                  Try Again
-                </Button>
-              </CardContent>
-            </Card>
-          ) : loading && emails.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8 sm:py-12">
-                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary mx-auto mb-3 sm:mb-4"></div>
-                <p className="text-gray-600 text-sm sm:text-base">Loading email data for analysis...</p>
-              </CardContent>
-            </Card>
-          ) : emails.length === 0 ? (
-            <Card>
-              <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="flex items-center text-base sm:text-lg">
-                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" />
-                  No Data Available
-                </CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  No emails found to analyze. Try syncing your Gmail account first.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Link href="/dashboard">
-                  <Button className="w-full sm:w-auto">Go to Dashboard</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              {/* Overview Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-xs sm:text-sm font-medium">Total Analyzed</CardTitle>
-                    <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-xl sm:text-2xl font-bold">{emails.length}</div>
-                    <p className="text-xs text-muted-foreground">Emails processed</p>
-                  </CardContent>
-                </Card>
+          {/* Mobile Navigation */}
+          <div className="sm:hidden mb-4">
+            <Navigation />
+          </div>
 
+          {loading && emails.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading email insights...</p>
+            </div>
+          ) : !insights ? (
+            <div className="text-center py-12">
+              <Mail className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Email Data</h3>
+              <p className="text-gray-600 mb-4">Fetch some emails first to see insights</p>
+              <Link href="/dashboard">
+                <Button>Go to Dashboard</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Overview Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-xs sm:text-sm font-medium">AI Accuracy</CardTitle>
-                    <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+                    <CardTitle className="text-sm font-medium">AI Accuracy</CardTitle>
+                    <Brain className="h-4 w-4 text-green-500" />
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-xl sm:text-2xl font-bold">94%</div>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">94%</div>
                     <p className="text-xs text-muted-foreground">Classification rate</p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-xs sm:text-sm font-medium">Processing Speed</CardTitle>
-                    <Brain className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 flex-shrink-0" />
+                    <CardTitle className="text-sm font-medium">Read Rate</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-blue-500" />
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-xl sm:text-2xl font-bold">0.2s</div>
-                    <p className="text-xs text-muted-foreground">Per email average</p>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{insights.readRate}%</div>
+                    <p className="text-xs text-muted-foreground">Emails processed</p>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-xs sm:text-sm font-medium">User</CardTitle>
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-600 flex-shrink-0"></div>
+                    <CardTitle className="text-sm font-medium">High Priority</CardTitle>
+                    <Zap className="h-4 w-4 text-red-500" />
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="text-base sm:text-lg font-bold line-clamp-1">{user?.displayName}</div>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{user?.email}</p>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{insights.highPriorityRate}%</div>
+                    <p className="text-xs text-muted-foreground">Urgent emails</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Daily Average</CardTitle>
+                    <Mail className="h-4 w-4 text-purple-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{insights.avgEmailsPerDay}</div>
+                    <p className="text-xs text-muted-foreground">Emails per day</p>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Detailed Insights */}
-              <ClassificationInsights emails={emails} />
-            </>
+              {/* Priority Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Target className="h-5 w-5 mr-2 text-blue-600" />
+                    Priority Distribution
+                  </CardTitle>
+                  <CardDescription>
+                    How AI classifies your emails by importance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Zap className="h-4 w-4 text-red-500" />
+                        <span className="text-sm font-medium">High Priority</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="destructive">{insights.stats.high}</Badge>
+                        <span className="text-sm text-gray-600">
+                          {Math.round((insights.stats.high / insights.stats.total) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-4 w-4 text-yellow-500" />
+                        <span className="text-sm font-medium">Medium Priority</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary">{insights.stats.medium}</Badge>
+                        <span className="text-sm text-gray-600">
+                          {Math.round((insights.stats.medium / insights.stats.total) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm font-medium">Low Priority</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline">{insights.stats.low}</Badge>
+                        <span className="text-sm text-gray-600">
+                          {Math.round((insights.stats.low / insights.stats.total) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Peak Activity */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                      Peak Activity
+                    </CardTitle>
+                    <CardDescription>
+                      When you receive the most emails
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-4">
+                      <div className="text-3xl font-bold text-blue-600 mb-2">
+                        {formatHour(insights.peakHour)}
+                      </div>
+                      <p className="text-sm text-gray-600">Most active hour</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Top Senders */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <User className="h-5 w-5 mr-2 text-blue-600" />
+                      Top Senders
+                    </CardTitle>
+                    <CardDescription>
+                      Most frequent email senders
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {insights.topSenders.map(([sender, count], index) => (
+                        <div key={sender} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-600">
+                              {index + 1}
+                            </div>
+                            <span className="text-sm font-medium truncate max-w-[200px]">
+                              {sender}
+                            </span>
+                          </div>
+                          <Badge variant="outline">{count}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* AI Keywords */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Brain className="h-5 w-5 mr-2 text-blue-600" />
+                    AI Classification Keywords
+                  </CardTitle>
+                  <CardDescription>
+                    Top keywords that influence email priority
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {insights.stats.topKeywords.slice(0, 15).map((keyword) => (
+                      <Badge key={keyword} variant="secondary" className="text-xs">
+                        {keyword}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </div>

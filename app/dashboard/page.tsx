@@ -11,11 +11,12 @@ import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Mail, User, Brain, Zap, RefreshCw, Menu } from "lucide-react"
+import { Mail, User, Brain, Zap, RefreshCw, Menu, MessageCircle } from "lucide-react"
+import Link from "next/link"
 import type { EmailSummary } from "@/lib/gmail-api"
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth()
+  const { user, logout, refreshAccess } = useAuth()
   const {
     emails,
     loading,
@@ -26,6 +27,7 @@ export default function DashboardPage() {
     refreshEmails,
     markAsRead,
     classifyEmails,
+    connectionStatus,
   } = useGmail()
 
   const [filteredEmails, setFilteredEmails] = useState<EmailSummary[]>([])
@@ -94,6 +96,43 @@ export default function DashboardPage() {
           <div className="sm:hidden mb-4">
             <Navigation />
           </div>
+
+          {/* Connection Status Alert */}
+          {connectionStatus === 'failed' && (
+            <div className="mb-4 sm:mb-6">
+              <Card className="border-red-200 bg-red-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-red-900 text-sm sm:text-base">Gmail Connection Issue</h3>
+                      <p className="text-red-700 text-xs sm:text-sm mt-1">
+                        Please sign out and sign in again to reconnect your Gmail account.
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        onClick={refreshAccess} 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                      >
+                        Reconnect
+                      </Button>
+                      <Button 
+                        onClick={logout} 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-red-300 text-red-700 hover:bg-red-100"
+                      >
+                        Sign Out
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="mb-6 sm:mb-8">
@@ -194,6 +233,41 @@ export default function DashboardPage() {
                       )}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* WhatsApp Setup */}
+              <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg flex items-center text-green-800">
+                    <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-2 flex-shrink-0" />
+                    <span className="truncate">WhatsApp Alerts</span>
+                  </CardTitle>
+                  <CardDescription className="text-xs sm:text-sm text-green-700">
+                    Get instant notifications for high-priority emails
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-xs text-green-800">AI-powered smart summaries</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-xs text-green-800">Only high-priority emails</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-xs text-green-800">Instant mobile notifications</span>
+                    </div>
+                    <Link href="/settings">
+                      <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white mt-3">
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Setup WhatsApp
+                      </Button>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
 

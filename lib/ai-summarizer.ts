@@ -27,19 +27,31 @@ export class AIEmailSummarizer {
       }
 
       const prompt = `
-        Summarize this email in exactly 2 lines for WhatsApp notification:
+        Create a clear 2-line WhatsApp summary for this email:
         
         From: ${from}
         Subject: ${subject}
         Content: ${emailContent}
         
         Requirements:
-        - Maximum 2 lines (each line max 50 characters)
-        - Focus on the most important information
-        - Use clear, concise language
-        - Maintain professional tone
+        - Exactly 2 complete lines (no truncation with ...)
+        - Each line 60-80 characters for readability
+        - First line: Main message or action
+        - Second line: Important details or context
+        - Use complete sentences, no cutting off mid-word
+        - Professional and clear language
+        - Focus on key information the user needs to know
         
-        Return only the 2-line summary, nothing else.
+        Examples:
+        "Your account security settings have been updated successfully"
+        "This change was made from a new device in California"
+        
+        OR
+        
+        "Meeting invitation for project review tomorrow at 3 PM"
+        "Please confirm your attendance and prepare status update"
+        
+        Return only the 2-line summary with complete sentences.
       `
 
       const response = await fetch("https://api.perplexity.ai/chat/completions", {
@@ -110,24 +122,98 @@ export class AIEmailSummarizer {
   }
 
   private createBasicSummary(content: string): string {
-    // Fallback basic summarization
-    const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 10)
-    const firstSentence = sentences[0]?.trim().substring(0, 50) || "Important email received"
-    const secondSentence = sentences[1]?.trim().substring(0, 50) || "Please check your email"
-
-    return `${firstSentence}\n${secondSentence}`
+    // Clean content first
+    const cleanContent = content
+      .replace(/\[image:.*?\]/gi, '') // Remove image references
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim()
+    
+    // Look for key patterns
+    const urgentPatterns = /\b(urgent|asap|emergency|critical|important|deadline|security|alert)\b/i
+    const actionPatterns = /\b(meeting|interview|call|appointment|review|approval|confirm|schedule|verify)\b/i
+    const timePatterns = /\b(today|tomorrow|this week|monday|tuesday|wednesday|thursday|friday|deadline|due)\b/i
+    
+    const isUrgent = urgentPatterns.test(cleanContent)
+    const hasAction = actionPatterns.test(cleanContent)
+    const hasTime = timePatterns.test(cleanContent)
+    
+    // Extract meaningful sentences
+    const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 15)
+    
+    let firstLine = ''
+    let secondLine = ''
+    
+    if (sentences.length >= 2) {
+      // Use complete sentences without truncation
+      firstLine = sentences[0].trim()
+      secondLine = sentences[1].trim()
+      
+      // Ensure reasonable length but keep complete words
+      if (firstLine.length > 80) {
+        const words = firstLine.split(' ')
+        const cutPoint = words.findIndex((_, i) => 
+          words.slice(0, i + 1).join(' ').length > 75
+        )
+        firstLine = words.slice(0, cutPoint > 0 ? cutPoint : words.length).join(' ')
+      }
+      
+      if (secondLine.length > 80) {
+        const words = secondLine.split(' ')
+        const cutPoint = words.findIndex((_, i) => 
+          words.slice(0, i + 1).join(' ').length > 75
+        )
+        secondLine = words.slice(0, cutPoint > 0 ? cutPoint : words.length).join(' ')
+      }
+    } else if (sentences.length === 1) {
+      // Split single sentence intelligently
+      const words = sentences[0].trim().split(' ')
+      if (words.length > 8) {
+        const midPoint = Math.ceil(words.length / 2)
+        firstLine = words.slice(0, midPoint).join(' ')
+        secondLine = words.slice(midPoint).join(' ')
+      } else {
+        firstLine = sentences[0].trim()
+        secondLine = "Please check your email for complete details"
+      }
+    } else {
+      // Create contextual summary
+      if (cleanContent.toLowerCase().includes('security') || cleanContent.toLowerCase().includes('alert')) {
+        firstLine = "Security notification received"
+        secondLine = "Please review your account activity and settings"
+      } else if (isUrgent) {
+        firstLine = "Important email requires your attention"
+        secondLine = "Please review urgently for required actions"
+      } else if (hasAction) {
+        firstLine = "Action may be required for this email"
+        secondLine = "Please check for dates and deadlines"
+      } else {
+        firstLine = "Important email received"
+        secondLine = "Please check your email for complete information"
+      }
+    }
+    
+    return `${firstLine}\n${secondLine}`
   }
 
   formatWhatsAppMessage(summary: EmailSummary): string {
-    return `*MailSense*
-_Business Account_
+    const timeStamp = new Date().toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    })
+    
+    return `🔔 *MailSense Alert*
+_High Priority Email_
 
 *From:* ${summary.from}
-*Sub:* ${summary.subject}
+*Subject:* ${summary.subject}
+*Time:* ${timeStamp}
 
-*Content:*
+*AI Summary:*
 ${summary.summary}
 
-_Priority: ${summary.priority}_`
+_Priority: ${summary.priority} | Powered by MailSense AI_
+_Check Gmail or MailSense dashboard for full details_`
   }
 }

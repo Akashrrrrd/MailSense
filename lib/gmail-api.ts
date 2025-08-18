@@ -194,6 +194,13 @@ export class GmailAPI {
   // ADDED: Method to check if Gmail access is working
   async testConnection(): Promise<boolean> {
     try {
+      console.log('[Gmail API] Testing connection...')
+      
+      if (!this.accessToken) {
+        console.error('[Gmail API] No access token provided')
+        return false
+      }
+
       const response = await fetch(
         `${this.baseURL}/users/me/profile`,
         {
@@ -204,9 +211,22 @@ export class GmailAPI {
         }
       )
 
-      return response.ok
+      if (response.ok) {
+        console.log('[Gmail API] Connection test successful')
+        return true
+      } else {
+        console.error('[Gmail API] Connection test failed:', response.status, response.statusText)
+        
+        if (response.status === 401) {
+          console.error('[Gmail API] Access token is invalid or expired')
+        } else if (response.status === 403) {
+          console.error('[Gmail API] Insufficient permissions - Gmail API access denied')
+        }
+        
+        return false
+      }
     } catch (error) {
-      console.error('Gmail connection test failed:', error)
+      console.error('[Gmail API] Connection test failed with error:', error)
       return false
     }
   }
