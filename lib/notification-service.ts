@@ -186,7 +186,8 @@ class NotificationService {
       
       console.log(`[WhatsApp] Sending notification for email: ${email.id}`)
       
-      const response = await fetch('/api/send-whatsapp', {
+      // Try Vonage first (better limits), fallback to Twilio if needed
+      let response = await fetch('/api/send-vonage-whatsapp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,13 +198,29 @@ class NotificationService {
         })
       })
 
+      // If Vonage fails, try Twilio as fallback
+      if (!response.ok) {
+        console.log('[WhatsApp] Vonage failed, trying Twilio fallback...')
+        response = await fetch('/api/send-whatsapp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: this.preferences.whatsappNumber,
+            message: whatsappMessage
+          })
+        })
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         throw new Error(errorData?.error || `HTTP ${response.status}`)
       }
 
       const result = await response.json()
-      console.log(`[WhatsApp] Message sent successfully:`, result.id)
+      const provider = result.provider || 'twilio'
+      console.log(`[WhatsApp] Message sent successfully via ${provider}:`, result.id)
     } catch (error: any) {
       console.error('Failed to send WhatsApp notification:', error)
       throw new Error(`Failed to send WhatsApp notification: ${error.message}`)
@@ -693,7 +710,8 @@ _Check your Gmail or MailSense dashboard for details_`
       
       console.log(`[WhatsApp] Sending bulk notification for ${emails.length} emails`)
       
-      const response = await fetch('/api/send-whatsapp', {
+      // Try Vonage first, fallback to Twilio
+      let response = await fetch('/api/send-vonage-whatsapp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -704,13 +722,29 @@ _Check your Gmail or MailSense dashboard for details_`
         })
       })
 
+      // Fallback to Twilio if Vonage fails
+      if (!response.ok) {
+        console.log('[WhatsApp] Vonage bulk failed, trying Twilio fallback...')
+        response = await fetch('/api/send-whatsapp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: this.preferences.whatsappNumber,
+            message: message
+          })
+        })
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         throw new Error(errorData?.error || `HTTP ${response.status}`)
       }
 
       const result = await response.json()
-      console.log(`[WhatsApp] Bulk message sent successfully:`, result.id)
+      const provider = result.provider || 'twilio'
+      console.log(`[WhatsApp] Bulk message sent successfully via ${provider}:`, result.id)
     } catch (error: any) {
       console.error('Failed to send bulk WhatsApp notification:', error)
       throw new Error(`Failed to send bulk WhatsApp notification: ${error.message}`)
