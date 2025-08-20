@@ -219,8 +219,7 @@ class NotificationService {
       }
 
       const result = await response.json()
-      const provider = result.provider || 'twilio'
-      console.log(`[WhatsApp] Message sent successfully via ${provider}:`, result.id)
+      console.log(`[WhatsApp] Message sent successfully via Vonage:`, result.id || 'No message ID received')
     } catch (error: any) {
       console.error('Failed to send WhatsApp notification:', error)
       throw new Error(`Failed to send WhatsApp notification: ${error.message}`)

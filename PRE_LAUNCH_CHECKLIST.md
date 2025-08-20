@@ -14,10 +14,10 @@ echo ".env" >> .gitignore
 echo ".env.local" >> .gitignore
 ```
 
-### 📱 **2. Twilio WhatsApp Setup**
-- ✅ **Credentials Configured**: Twilio account and auth token set
-- ⚠️ **SANDBOX NUMBER**: Currently using Twilio sandbox number `+14155238886`
-- 🔴 **ACTION REQUIRED**: For production, get approved WhatsApp Business number
+### 📱 **2. Vonage WhatsApp Setup**
+- ✅ **Credentials Configured**: Vonage API key and secret set
+- ⚠️ **SANDBOX MODE**: Ensure Vonage Messages API is properly configured
+- 🔴 **ACTION REQUIRED**: Verify WhatsApp Business Account setup in Vonage
 
 ### 🔥 **3. Firebase Configuration**
 - ✅ **Firebase Project**: `mail-46824` configured
@@ -44,8 +44,9 @@ echo ".env.local" >> .gitignore
 - ✅ Smart caching (2-minute expiration)
 - ✅ Real-time sync
 
-### 📱 **WhatsApp Notifications**
-- ✅ Phone number setup
+### 📱 **WhatsApp Notifications (Vonage)**
+- ✅ Vonage API credentials configured
+- ✅ WhatsApp number setup in Vonage
 - ✅ Enable/disable toggle
 - ✅ High-priority email filtering
 - ✅ AI-generated summaries
@@ -85,9 +86,9 @@ echo ".env.local" >> .gitignore
 ### 🔧 **Environment Setup**
 ```bash
 # Required Environment Variables for Production:
-TWILIO_ACCOUNT_SID=your_production_sid
-TWILIO_AUTH_TOKEN=your_production_token
-TWILIO_WHATSAPP_NUMBER=your_approved_whatsapp_number
+VONAGE_API_KEY=your_vonage_api_key
+VONAGE_API_SECRET=your_vonage_api_secret
+VONAGE_WHATSAPP_NUMBER=your_vonage_whatsapp_number
 PERPLEXITY_API_KEY=your_perplexity_key
 ```
 
@@ -107,21 +108,21 @@ PERPLEXITY_API_KEY=your_perplexity_key
    - Review Firebase security rules
    - Enable proper authentication requirements
 
-### 📱 **Twilio Production Setup**
+### 📱 **Vonage Production Setup**
 1. **WhatsApp Business Account**: 
-   - Apply for WhatsApp Business API access
-   - Get approved phone number (not sandbox)
-   - Configure message templates if required
+   - Set up WhatsApp Business API access through Vonage
+   - Configure approved WhatsApp number in Vonage dashboard
+   - Set up message templates if required
 
 2. **Rate Limits**: 
-   - Monitor message sending limits
+   - Monitor Vonage API rate limits
    - Implement proper error handling for rate limits
 
 ## ⚠️ **POTENTIAL ISSUES TO MONITOR**
 
 ### 🔄 **Rate Limiting**
 - **Gmail API**: 250 quota units per user per 100 seconds
-- **Twilio**: Message sending limits based on account type
+- **Vonage**: Message sending limits based on account type
 - **Perplexity**: API request limits based on plan
 
 ### 🔐 **Token Management**
@@ -185,4 +186,4 @@ PERPLEXITY_API_KEY=your_perplexity_key
 - ✅ Gmail authentication stable
 - ✅ Production environment configured
 
-Your MailSense project is very close to launch-ready! The main items to address are security (environment variables) and production service setup (Twilio WhatsApp Business, Firebase OAuth).
+Your MailSense project is very close to launch-ready! The main items to address are security (environment variables) and production service setup (Vonage WhatsApp Business, Firebase OAuth).

@@ -43,7 +43,7 @@ export function EmailStats({ totalCount, unreadCount, highPriorityCount, loading
               <>
                 {unreadCount}
                 {unreadCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs px-2 py-0.5 h-5">
+                  <Badge variant="secondary" className="ml-2 text-xs px-2 py-0.5 h-5 text-white">
                     NEW
                   </Badge>
                 )}
@@ -69,7 +69,7 @@ export function EmailStats({ totalCount, unreadCount, highPriorityCount, loading
               <>
                 {highPriorityCount}
                 {highPriorityCount > 0 && (
-                  <Badge variant="destructive" className="ml-2 text-xs px-2 py-0.5 h-5">
+                  <Badge variant="destructive" className="ml-2 text-xs px-2 py-0.5 h-5 text-white">
                     URGENT
                   </Badge>
                 )}

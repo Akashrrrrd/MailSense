@@ -90,19 +90,19 @@ export function NotificationSettings() {
 
       if (error.message?.includes("Daily message limit reached") || error.message?.includes("TRIAL_LIMIT_EXCEEDED")) {
         setWhatsappError(
-          "🚨 Twilio trial limit reached (9 messages/day). Upgrade to paid account for unlimited messages or wait until tomorrow."
+          "🚨 Vonage trial limit reached (9 messages/day). Upgrade to paid account for unlimited messages or wait until tomorrow."
         )
       } else if (error.message?.includes("Rate limit exceeded")) {
         setWhatsappError(
           "⏰ Rate limit exceeded. Please wait a few minutes before sending another test message."
         )
-      } else if (error.message?.includes("Twilio credentials not configured")) {
+      } else if (error.message?.includes("Vonage credentials not configured")) {
         setWhatsappError(
-          "Twilio credentials not configured. Please add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_NUMBER to your environment variables."
+          "Vonage credentials not configured. Please add VONAGE_API_KEY, VONAGE_API_SECRET, and VONAGE_WHATSAPP_NUMBER to your environment variables."
         )
       } else if (error.message?.includes("Failed to send WhatsApp notification")) {
         setWhatsappError(
-          "Failed to send WhatsApp message. Please check your Twilio configuration and phone number format."
+          "Failed to send WhatsApp message. Please check your Vonage configuration and phone number format."
         )
       } else if (error.message?.includes("No emails found")) {
         setWhatsappError(
@@ -165,6 +165,44 @@ export function NotificationSettings() {
     return value
   }
 
+  const handleTestWhatsApp = async () => {
+    if (!preferences.whatsappNumber) {
+      setWhatsappError("Please enter a valid WhatsApp number")
+      return
+    }
+
+    setWhatsappTestStatus("sending")
+    setWhatsappError("")
+
+    try {
+      const response = await fetch('/api/send-vonage-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: preferences.whatsappNumber,
+          message: 'This is a test message from MailSense. Your WhatsApp notifications via Vonage are working correctly! 🎉'
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send WhatsApp message')
+      }
+
+      setWhatsappTestStatus("success")
+      setTimeout(() => setWhatsappTestStatus("idle"), 3000)
+    } catch (error) {
+      console.error('Error sending WhatsApp test via Vonage:', error)
+      setWhatsappError(error instanceof Error ? error.message : 'Failed to send test message')
+      setWhatsappTestStatus("error")
+      setTimeout(() => {
+        setWhatsappTestStatus("idle")
+        setWhatsappError("")
+      }, 5000)
+    }
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Permission Status */}
@@ -201,60 +239,37 @@ export function NotificationSettings() {
           ) : permissionStatus === "granted" ? (
             <div className="space-y-3">
               <p className="text-green-600 text-sm">Notifications are enabled and working!</p>
-              
-              {/* Test Email Selection */}
-              {availableEmails.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Test with Real Email:</Label>
-                  <Select value={selectedEmailForTest} onValueChange={setSelectedEmailForTest}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select an email to test with" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableEmails.map((email) => (
-                        <SelectItem key={email.id} value={email.id}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{email.subject.substring(0, 50)}...</span>
-                            <span className="text-xs text-gray-500">{email.from}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                <div className="flex-1 flex items-center gap-2">
+                  <Button
+                    onClick={clearProcessedEmails}
+                    variant="outline"
+                    size="sm"
+                    className="whitespace-nowrap"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reset Notifications
+                  </Button>
+                  <Button
+                    onClick={sendTestNotification}
+                    disabled={whatsappTestStatus === 'sending'}
+                    variant="outline"
+                    size="sm"
+                    className="whitespace-nowrap"
+                  >
+                    {whatsappTestStatus === 'sending' ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Test WhatsApp
+                      </>
+                    )}
+                  </Button>
                 </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button
-                  onClick={sendTestNotification}
-                  disabled={testNotificationSent || whatsappTestStatus === "sending"}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 sm:flex-none min-h-[44px] bg-transparent flex items-center"
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {whatsappTestStatus === "sending"
-                    ? "Testing AI..."
-                    : whatsappTestStatus === "success"
-                    ? "AI Test Sent!"
-                    : whatsappTestStatus === "error"
-                    ? "Test Failed"
-                    : testNotificationSent
-                    ? "Test Sent!"
-                    : availableEmails.length > 0
-                    ? "Test with Real Email"
-                    : "Test AI Notifications"}
-                </Button>
-                
-                <Button
-                  onClick={loadAvailableEmails}
-                  variant="ghost"
-                  size="sm"
-                  className="min-h-[44px] flex items-center"
-                >
-                  <RefreshCw className="h-4 w-4 mr-1" />
-                  Refresh Emails
-                </Button>
               </div>
             </div>
           ) : (
@@ -329,21 +344,62 @@ export function NotificationSettings() {
             
             {/* Step 1: Phone Number */}
             <div className="space-y-3 mb-4">
-              <Label htmlFor="whatsapp-number" className="text-sm font-medium flex items-center">
-                <Phone className="h-4 w-4 mr-1" />
-                Step 1: Enter Your WhatsApp Number
-              </Label>
-              <Input
-                id="whatsapp-number"
-                type="tel"
-                placeholder="+1234567890 (include country code)"
-                value={preferences.whatsappNumber}
-                onChange={(e) => handlePreferenceChange("whatsappNumber", formatPhoneNumber(e.target.value))}
-                className="font-mono h-12 text-base"
-              />
-              <p className="text-xs text-green-700">
-                📱 Use international format: +1 (US), +91 (India), +44 (UK), etc.
-              </p>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="whatsapp-number">WhatsApp Number (Vonage)</Label>
+                  <Input
+                    id="whatsapp-number"
+                    type="tel"
+                    placeholder="+1234567890"
+                    value={preferences.whatsappNumber}
+                    onChange={(e) => handlePreferenceChange("whatsappNumber", e.target.value)}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Include country code (e.g., +1 for US, +44 for UK). Powered by Vonage.
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleTestWhatsApp}
+                  disabled={whatsappTestStatus === "sending" || !preferences.whatsappNumber}
+                  className="w-full"
+                >
+                  {whatsappTestStatus === "sending" ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Sending Test...
+                    </>
+                  ) : whatsappTestStatus === "success" ? (
+                    <>
+                      <MessageCircle className="mr-2 h-4 w-4 text-green-500" />
+                      Test Sent via Vonage!
+                    </>
+                  ) : whatsappTestStatus === "error" ? (
+                    <>
+                      <MessageCircle className="mr-2 h-4 w-4 text-red-500" />
+                      Failed to Send
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Send Test via Vonage
+                    </>
+                  )}
+                </Button>
+                {whatsappTestStatus === "error" && whatsappError && (
+                  <p className="text-sm text-red-500">
+                    {whatsappError}
+                    {whatsappError.includes('credentials') && (
+                      <span className="block mt-1">
+                        Please check your Vonage API credentials in the environment variables.
+                      </span>
+                    )}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Step 2: Enable Toggle */}

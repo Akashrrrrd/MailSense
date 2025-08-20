@@ -15,16 +15,21 @@ export default function SettingsPage() {
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+        <div className="w-full max-w-[100vw] overflow-x-hidden px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 space-y-4 sm:space-y-0">
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-              <Link href="/dashboard">
-                <Button variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </Link>
+          <div className="flex flex-col space-y-4 sm:space-y-0 mb-6 sm:mb-8">
+            <div className="flex flex-col space-y-3 w-full">
+              <div className="w-full flex justify-between items-center">
+                <Link href="/dashboard" className="w-auto">
+                  <Button variant="outline" size="sm" className="bg-transparent">
+                    <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Back to Dashboard</span>
+                  </Button>
+                </Link>
+                <div className="sm:hidden">
+                  <Navigation />
+                </div>
+              </div>
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center">
                   <Settings className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-blue-600 flex-shrink-0" />
@@ -35,23 +40,19 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 lg:space-x-4 w-full sm:w-auto">
-              <div className="hidden sm:block">
+            <div className="hidden sm:flex items-center justify-between w-full">
+              <div className="flex-1">
                 <Navigation />
               </div>
-              <Button onClick={logout} variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
+              <Button onClick={logout} variant="outline" size="sm" className="bg-transparent">
                 Sign Out
               </Button>
             </div>
           </div>
 
-          {/* Mobile Navigation */}
-          <div className="sm:hidden mb-4">
-            <Navigation />
-          </div>
 
           {/* Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 -mx-2 sm:mx-0">
             {/* Settings Content */}
             <div className="lg:col-span-3 order-2 lg:order-1">
               <NotificationSettings />

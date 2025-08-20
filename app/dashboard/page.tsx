@@ -32,7 +32,6 @@ export default function DashboardPage() {
 
   const [filteredEmails, setFilteredEmails] = useState<EmailSummary[]>([])
   const [showFiltered, setShowFiltered] = useState(false)
-  const [showSidebar, setShowSidebar] = useState(false)
 
   const handleFilteredEmails = (filtered: EmailSummary[]) => {
     setFilteredEmails(filtered)
@@ -44,7 +43,7 @@ export default function DashboardPage() {
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+        <div className="w-full max-w-[100vw] overflow-x-hidden px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
@@ -59,24 +58,12 @@ export default function DashboardPage() {
                   Welcome back, {user?.displayName || user?.email}
                 </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="lg:hidden flex-shrink-0 bg-transparent"
-                onClick={() => setShowSidebar(!showSidebar)}
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 w-full sm:w-auto overflow-x-auto pb-1 -mx-1">
               <div className="hidden sm:block">
                 <Navigation />
               </div>
-              <Button onClick={classifyEmails} variant="outline" size="sm" className="flex-shrink-0 bg-transparent">
-                <Brain className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Re-classify</span>
-              </Button>
               <Button
                 onClick={refreshEmails}
                 disabled={loading}
@@ -87,7 +74,7 @@ export default function DashboardPage() {
                 <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? "animate-spin" : ""}`} />
                 <span className="hidden sm:inline">{loading ? "Syncing..." : "Sync"}</span>
               </Button>
-              <Button onClick={logout} variant="outline" size="sm" className="flex-shrink-0 bg-transparent">
+              <Button onClick={logout} variant="outline" size="sm" className="flex-shrink-0 bg-transparent whitespace-nowrap">
                 <span className="text-xs sm:text-sm">Sign Out</span>
               </Button>
             </div>
@@ -161,7 +148,7 @@ export default function DashboardPage() {
               />
             </div>
 
-            <div className={`space-y-4 sm:space-y-6 ${showSidebar ? "block" : "hidden"} lg:block`}>
+            <div className="space-y-4 sm:space-y-6 hidden lg:block">
               {/* User Profile */}
               <Card>
                 <CardHeader className="pb-3 sm:pb-4">
@@ -211,11 +198,11 @@ export default function DashboardPage() {
                       {highPriorityEmails.slice(0, 5).map((email) => (
                         <div key={email.id} className="p-2 sm:p-3 bg-red-50 rounded-lg border border-red-200">
                           <div className="flex items-center justify-between mb-1">
-                            <Badge variant="destructive" className="text-xs">
+                            <Badge variant="destructive" className="text-xs text-white">
                               URGENT
                             </Badge>
                             {!email.isRead && (
-                              <Badge variant="default" className="text-xs bg-blue-600">
+                              <Badge variant="default" className="text-xs bg-blue-600 text-white">
                                 NEW
                               </Badge>
                             )}

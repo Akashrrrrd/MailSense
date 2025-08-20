@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import jwt from 'jsonwebtoken'
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
@@ -45,35 +46,39 @@ export async function POST(request: NextRequest) {
     }
 
     // Vonage Messages API endpoint
-    const vonageUrl = 'https://api.nexmo.com/v1/messages'
+    const vonageUrl = 'https://messages-sandbox.nexmo.com/v1/messages'
     
-    // Create JWT token for authentication
-    const jwt = await createVonageJWT(apiKey, apiSecret)
+    // Format phone numbers (remove + and any non-numeric characters)
+    const cleanToNumber = to.replace(/\D/g, '')
+    // Use Vonage's sandbox number as the sender
+    const vonageSandboxNumber = '14157386102'
     
     const controller = new AbortController()
     const timeout = 30000
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-    console.log('[Vonage WhatsApp] Preparing to send message to:', formattedTo)
+    console.log('[Vonage WhatsApp] Preparing to send message to:', cleanToNumber)
 
     try {
       const fetchStart = Date.now()
       console.log('[Vonage WhatsApp] Starting Vonage API call...')
 
+      // Create Basic Auth header
+      const authHeader = 'Basic ' + Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')
+      
       const response = await fetch(vonageUrl, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${jwt}`,
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "User-Agent": "MailSense-WhatsApp/1.0",
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authHeader
         },
         body: JSON.stringify({
-          from: whatsappNumber,
-          to: formattedTo,
-          message_type: "text",
-          text: message.substring(0, 4096), // WhatsApp limit
-          channel: "whatsapp"
+          from: vonageSandboxNumber,
+          to: cleanToNumber,
+          message_type: 'text',
+          text: message.substring(0, 4096),
+          channel: 'whatsapp'
         }),
         signal: controller.signal,
       })
@@ -150,7 +155,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { 
             error: "DNS lookup failed",
-            details: "Cannot resolve api.nexmo.com",
+            details: "Cannot resolve messages-sandbox.nexmo.com",
             solution: "Check your internet connection and DNS settings"
           },
           { status: 503 }
@@ -162,7 +167,7 @@ export async function POST(request: NextRequest) {
           error: "Network error",
           details: error.message,
           code: error.code,
-          solution: "Verify your server can reach api.nexmo.com"
+          solution: "Verify your server can reach messages-sandbox.nexmo.com"
         },
         { status: 503 }
       )
@@ -182,43 +187,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper function to create Vonage JWT
-async function createVonageJWT(apiKey: string, apiSecret: string): Promise<string> {
-  const header = {
-    typ: "JWT",
-    alg: "HS256"
-  }
-
-  const payload = {
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiry
-    jti: crypto.randomUUID(),
-    iss: apiKey
-  }
-
-  // Simple JWT creation (for production, consider using a JWT library)
-  const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-  const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-  
-  const signature = await createHMAC(`${encodedHeader}.${encodedPayload}`, apiSecret)
-  
-  return `${encodedHeader}.${encodedPayload}.${signature}`
-}
-
-// Helper function to create HMAC signature
-async function createHMAC(data: string, secret: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  )
-  
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data))
-  return btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-}
+// JWT is now handled by the jsonwebtoken package

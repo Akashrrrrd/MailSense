@@ -5,7 +5,7 @@ interface EmailSummary {
   priority: "HIGH" | "MEDIUM" | "LOW"
 }
 
-interface PerplexityResponse {
+interface OpenAIResponse {
   choices: Array<{
     message: {
       content: string
@@ -17,13 +17,13 @@ export class AIEmailSummarizer {
   private apiKey: string
 
   constructor() {
-    this.apiKey = process.env.PERPLEXITY_API_KEY || ""
+    this.apiKey = process.env.OPENAI_API_KEY || ""
   }
 
   async summarizeEmail(emailContent: string, from: string, subject: string): Promise<EmailSummary> {
     try {
       if (!this.apiKey) {
-        throw new Error("Perplexity API key not configured")
+        throw new Error("OpenAI API key not configured")
       }
 
       const prompt = `
@@ -54,30 +54,36 @@ export class AIEmailSummarizer {
         Return only the 2-line summary with complete sentences.
       `
 
-      const response = await fetch("https://api.perplexity.ai/chat/completions", {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${this.apiKey}`,
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: "llama-3.1-sonar-small-128k-online",
+          model: "gpt-3.5-turbo",
           messages: [
             {
-              role: "user",
-              content: prompt,
+              role: "system",
+              content: "You are a helpful assistant that summarizes emails concisely for WhatsApp notifications."
             },
+            {
+              role: "user",
+              content: prompt
+            }
           ],
-          max_tokens: 100,
-          temperature: 0.3,
-        }),
+          max_tokens: 200,
+          temperature: 0.3
+        })
       })
 
       if (!response.ok) {
-        throw new Error(`Perplexity API error: ${response.status}`)
+        const errorData = await response.json()
+        console.error("OpenAI API error:", errorData)
+        throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`)
       }
 
-      const data: PerplexityResponse = await response.json()
+      const data: OpenAIResponse = await response.json()
       const summary = data.choices[0]?.message?.content?.trim() || "Important email received"
 
       // Clean up the summary to ensure it's exactly 2 lines

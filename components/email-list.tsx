@@ -40,11 +40,11 @@ export function EmailList({ emails, loading, error, onMarkAsRead, onRefresh }: E
   const getPriorityColor = (priority: "high" | "medium" | "low") => {
     switch (priority) {
       case "high":
-        return "destructive"
+        return { variant: "destructive" as const, className: "text-white" }
       case "medium":
-        return "secondary"
+        return { variant: "secondary" as const, className: "" }
       case "low":
-        return "outline"
+        return { variant: "outline" as const, className: "" }
     }
   }
 
@@ -122,14 +122,17 @@ export function EmailList({ emails, loading, error, onMarkAsRead, onRefresh }: E
               {emails.map((email, index) => (
                 <div key={email.id}>
                   <div
-                    className={`p-3 sm:p-4 rounded-lg border transition-colors ${
+                    className={`p-3 sm:p-4 rounded-lg border transition-colors w-full ${
                       email.isRead ? "bg-gray-50" : "bg-white border-blue-200"
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-2 space-y-2 sm:space-y-0">
-                      <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap gap-1">
+                      <div className="flex items-center flex-1 min-w-0 flex-wrap gap-1">
                         {getPriorityIcon(email.priority)}
-                        <Badge variant={getPriorityColor(email.priority)} className="text-xs px-1 py-0 h-5">
+                        <Badge 
+                          variant={getPriorityColor(email.priority).variant} 
+                          className={`text-xs px-1 py-0 h-5 ${getPriorityColor(email.priority).className}`}
+                        >
                           {email.priority.toUpperCase()}
                         </Badge>
                         {!email.isRead && (
@@ -138,21 +141,27 @@ export function EmailList({ emails, loading, error, onMarkAsRead, onRefresh }: E
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center space-x-1 text-xs text-gray-500 flex-shrink-0">
+                      <div className="flex items-center space-x-1 text-xs text-gray-500 flex-shrink-0 ml-2">
                         <Clock className="h-3 w-3" />
                         {formatDate(email.date)}
                       </div>
                     </div>
 
-                    <div className="mb-2 sm:mb-3">
-                      <div className="flex items-center space-x-2 mb-1">
+                    <div className="mb-2 sm:mb-3 space-y-1">
+                      <div className="flex items-center space-x-2">
                         <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
-                        <span className="font-medium text-xs sm:text-sm truncate">{extractSenderName(email.from)}</span>
+                        <span className="font-medium text-xs sm:text-sm truncate flex-1 min-w-0">
+                          {extractSenderName(email.from)}
+                        </span>
                       </div>
-                      <h3 className="font-semibold text-gray-900 line-clamp-1 text-sm sm:text-base">{email.subject}</h3>
+                      <h3 className="font-semibold text-gray-900 line-clamp-1 text-sm sm:text-base pl-5 -mt-1">
+                        {email.subject}
+                      </h3>
                     </div>
 
-                    <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 mb-3">{email.snippet}</p>
+                    <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 mb-3 pl-5 -mt-1">
+                      {email.snippet}
+                    </p>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
                       <div className="text-xs text-gray-500">ID: {email.id.substring(0, 8)}...</div>
