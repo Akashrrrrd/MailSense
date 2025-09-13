@@ -14,29 +14,29 @@ export default function HomePage() {
 
   return (
     <AuthGuard requireAuth={false}>
-      <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-          <div className="max-w-4xl mx-auto text-center">
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+          <div className="max-w-5xl mx-auto text-center">
             {/* Hero Section */}
-            <div className="mb-8 sm:mb-12">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6">
+            <div className="mb-12 lg:mb-16">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 lg:mb-8">
                 Mail<span className="text-blue-600">Sense</span>
               </h1>
-              <p className="text-lg sm:text-xl text-gray-600 mb-4 sm:mb-6 max-w-2xl mx-auto px-4 sm:px-0">
+              <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-8 lg:mb-10 max-w-3xl mx-auto leading-relaxed">
                 Professional email summarization with AI-powered insights delivered directly to WhatsApp.
               </p>
               
               {/* Trust Indicators */}
-              <div className="flex flex-wrap justify-center gap-4 mb-6 sm:mb-8">
-                <div className="flex items-center space-x-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+              <div className="flex flex-wrap justify-center gap-4 lg:gap-6 mb-8 lg:mb-12">
+                <div className="flex items-center space-x-2 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
                   <Lock className="h-4 w-4 text-gray-600" />
                   <span className="text-sm font-medium text-gray-700">Secure Processing</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+                <div className="flex items-center space-x-2 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
                   <Shield className="h-4 w-4 text-gray-600" />
                   <span className="text-sm font-medium text-gray-700">Enterprise Security</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
+                <div className="flex items-center space-x-2 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
                   <Eye className="h-4 w-4 text-gray-600" />
                   <span className="text-sm font-medium text-gray-700">Read-Only Access</span>
                 </div>
@@ -44,38 +44,38 @@ export default function HomePage() {
             </div>
 
             {/* Features Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              <Card className="border border-gray-200 hover:border-gray-300 transition-colors">
-                <CardHeader className="pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12 lg:mb-16">
+              <Card className="border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md bg-white">
+                <CardHeader className="pb-6">
                   <Brain className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                  <CardTitle className="text-xl">AI Summarization</CardTitle>
+                  <CardTitle className="text-xl font-semibold">AI Summarization</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 leading-relaxed">
                     Advanced AI processes your emails and delivers concise, actionable summaries.
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="border border-gray-200 hover:border-gray-300 transition-colors">
-                <CardHeader className="pb-4">
+              <Card className="border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md bg-white">
+                <CardHeader className="pb-6">
                   <MessageCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                  <CardTitle className="text-xl">WhatsApp Delivery</CardTitle>
+                  <CardTitle className="text-xl font-semibold">WhatsApp Delivery</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 leading-relaxed">
                     Receive intelligent email summaries directly on WhatsApp for instant access.
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="border border-gray-200 hover:border-gray-300 transition-colors sm:col-span-2 lg:col-span-1">
-                <CardHeader className="pb-4">
+              <Card className="border border-gray-200 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md bg-white sm:col-span-2 lg:col-span-1">
+                <CardHeader className="pb-6">
                   <Shield className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-                  <CardTitle className="text-xl">Enterprise Security</CardTitle>
+                  <CardTitle className="text-xl font-semibold">Enterprise Security</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 leading-relaxed">
                     Bank-level security with Google OAuth and zero data storage architecture.
                   </p>
                 </CardContent>

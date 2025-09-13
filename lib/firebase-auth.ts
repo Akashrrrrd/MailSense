@@ -54,8 +54,8 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       // Store access token and expiry time in localStorage
       localStorage.setItem("gmail_access_token", accessToken)
       
-      // OAuth tokens typically expire in 1 hour, but we'll be conservative and use 45 minutes
-      const expiryTime = Date.now() + (45 * 60 * 1000) // 45 minutes from now
+      // OAuth tokens typically expire in 1 hour, but we'll be conservative and use 50 minutes
+      const expiryTime = Date.now() + (50 * 60 * 1000) // 50 minutes from now
       localStorage.setItem("gmail_token_expiry", expiryTime.toString())
       
       // Note: Browser-based OAuth doesn't provide refresh tokens
@@ -97,11 +97,17 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
 export const signOut = async (): Promise<void> => {
   try {
     await firebaseSignOut(auth)
-    // Clear all stored tokens
+    // Clear all stored tokens and session data
     localStorage.removeItem("gmail_access_token")
     localStorage.removeItem("gmail_refresh_token")
     localStorage.removeItem("gmail_token_expiry")
-    console.log("Successfully signed out")
+    localStorage.removeItem("gmail_token_last_validation")
+    localStorage.removeItem("mailsense-login-time")
+    localStorage.removeItem("mailsense-last-fetch")
+    localStorage.removeItem("mailsense-emails")
+    localStorage.removeItem("mailsense-processed-emails")
+    localStorage.removeItem("mailsense-whatsapp-sent-emails")
+    console.log("Successfully signed out and cleared all session data")
   } catch (error) {
     console.error("Error signing out:", error)
     throw new Error("Failed to sign out. Please try again.")
@@ -174,9 +180,9 @@ export const isTokenExpired = (): boolean => {
   const expiry = getTokenExpiry()
   if (!expiry) return true
   
-  // Consider token expired if it expires within the next 5 minutes
-  const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000)
-  return expiry <= fiveMinutesFromNow
+  // Consider token expired if it expires within the next 2 minutes (more conservative)
+  const twoMinutesFromNow = Date.now() + (2 * 60 * 1000)
+  return expiry <= twoMinutesFromNow
 }
 
 export const refreshAccessToken = async (): Promise<string | null> => {

@@ -44,9 +44,9 @@ export default function DashboardPage() {
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-gray-50">
-        <div className="w-full max-w-[100vw] overflow-x-hidden px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 space-y-4 sm:space-y-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 lg:mb-10 space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
                 <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
@@ -102,7 +102,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
             {/* Email Content - Takes up 3 columns on desktop, full width on mobile */}
             <div className="lg:col-span-3 space-y-4 sm:space-y-6">
               {/* Search and Filter */}

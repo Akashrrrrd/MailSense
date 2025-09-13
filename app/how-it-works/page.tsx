@@ -22,20 +22,20 @@ import {
 
 export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
 
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12 lg:mb-16">
           <Link href="/" className="inline-block mb-8">
-            <Button variant="outline" className="bg-white border-gray-300">
+            <Button variant="outline" className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm">
               ← Back to Home
             </Button>
           </Link>
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
             How MailSense Works
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
             Professional email summarization delivered to WhatsApp in four simple steps
           </p>
         </div>

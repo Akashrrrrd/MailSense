@@ -32,10 +32,12 @@ export interface NotificationPreferences {
 class NotificationService {
   private preferences: NotificationPreferences
   private processedEmails: Set<string> = new Set()
+  private whatsappSentEmails: Set<string> = new Set() // Track WhatsApp-sent emails separately
 
   constructor() {
     this.preferences = this.loadPreferences()
     this.initializeProcessedEmails()
+    this.initializeWhatsAppSentEmails()
   }
 
   private loadPreferences(): NotificationPreferences {
@@ -84,6 +86,31 @@ class NotificationService {
     }
   }
 
+  private initializeWhatsAppSentEmails() {
+    if (typeof window === 'undefined') return
+    
+    try {
+      const stored = localStorage.getItem('mailsense-whatsapp-sent-emails')
+      if (stored) {
+        this.whatsappSentEmails = new Set(JSON.parse(stored))
+        console.log(`[WhatsApp] Loaded ${this.whatsappSentEmails.size} previously sent email IDs`)
+      }
+    } catch (error) {
+      console.error('Failed to load WhatsApp sent emails:', error)
+    }
+  }
+
+  private saveWhatsAppSentEmails() {
+    if (typeof window === 'undefined') return
+    
+    try {
+      localStorage.setItem('mailsense-whatsapp-sent-emails', JSON.stringify([...this.whatsappSentEmails]))
+      console.log(`[WhatsApp] Saved ${this.whatsappSentEmails.size} sent email IDs to storage`)
+    } catch (error) {
+      console.error('Failed to save WhatsApp sent emails:', error)
+    }
+  }
+
   private saveProcessedEmails() {
     if (typeof window === 'undefined') return
     
@@ -123,12 +150,15 @@ class NotificationService {
 
   async processNewEmails(emails: Email[]): Promise<void> {
     console.log(`[Notifications] Processing ${emails.length} emails for notifications`)
+    console.log(`[WhatsApp] Currently tracking ${this.whatsappSentEmails.size} previously sent emails`)
     
     for (const email of emails) {
       if (this.shouldNotify(email)) {
-        console.log(`[Notifications] Sending notification for email: ${email.id}`)
+        console.log(`[Notifications] Sending notification for email: ${email.id} - "${email.subject}"`)
         await this.showNotification(email)
         this.processedEmails.add(email.id)
+      } else {
+        console.log(`[Notifications] Skipping email: ${email.id} - "${email.subject}" (already processed or doesn't meet criteria)`)
       }
     }
     
@@ -140,12 +170,25 @@ class NotificationService {
 
     const promises: Promise<void>[] = []
 
+    // Desktop notifications for all emails (if enabled)
     if (this.preferences.desktopEnabled && !this.isInQuietHours()) {
       promises.push(this.showDesktopNotification(email))
     }
 
-    if (this.preferences.whatsappEnabled && this.preferences.whatsappNumber) {
-      promises.push(this.sendWhatsAppNotification(email))
+    // WhatsApp notifications ONLY for high priority emails (and never sent before)
+    if (this.preferences.whatsappEnabled && 
+        this.preferences.whatsappNumber && 
+        (email.priority === "high" || email.isImportant)) {
+      
+      // Check if this email was already sent to WhatsApp
+      if (this.whatsappSentEmails.has(email.id)) {
+        console.log(`[WhatsApp] ⚠️ SKIPPING - Email already sent to WhatsApp: ${email.subject} (ID: ${email.id})`)
+      } else {
+        console.log(`[WhatsApp] ✅ Sending NEW high-priority email to WhatsApp: ${email.subject} (ID: ${email.id})`)
+        promises.push(this.sendWhatsAppNotification(email))
+      }
+    } else if (this.preferences.whatsappEnabled && this.preferences.whatsappNumber) {
+      console.log(`[WhatsApp] Skipping medium/low priority email: ${email.subject} (priority: ${email.priority})`)
     }
 
     await Promise.allSettled(promises)
@@ -201,31 +244,17 @@ class NotificationService {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
         console.error('[WhatsApp] Twilio API error:', errorData)
-        
-        // Try SMS fallback if WhatsApp fails
-        console.log('[WhatsApp] WhatsApp failed, trying SMS fallback...')
-        const smsResponse = await fetch('/api/send-twilio-sms', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: this.preferences.whatsappNumber.replace('whatsapp:', ''), // Remove whatsapp: prefix for SMS
-            message: `📧 MailSense Alert (SMS Fallback)\n\n${whatsappMessage}`,
-          }),
-        })
-
-        if (!smsResponse.ok) {
-          throw new Error(`Both WhatsApp and SMS failed: ${errorData.error}`)
-        }
-
-        const smsResult = await smsResponse.json()
-        console.log(`[SMS] Fallback message sent successfully:`, smsResult.id)
-        return
+        throw new Error(`WhatsApp notification failed: ${errorData.error}`)
       }
 
       const result = await response.json()
-      console.log(`[WhatsApp] Message sent successfully via Twilio:`, result.id || 'No message ID received')
+      console.log(`[WhatsApp] ✅ Message sent successfully via Twilio:`, result.id || 'No message ID received')
+      
+      // Mark this email as sent to WhatsApp (NEVER send again)
+      this.whatsappSentEmails.add(email.id)
+      this.saveWhatsAppSentEmails()
+      console.log(`[WhatsApp] 🔒 Email ${email.id} marked as SENT - will never be sent again`)
+      
     } catch (error: any) {
       console.error('Failed to send WhatsApp notification:', error)
       throw new Error(`Failed to send WhatsApp notification: ${error.message}`)
@@ -691,6 +720,17 @@ Powered by MailSense AI`
     this.saveProcessedEmails()
   }
 
+  clearWhatsAppSentEmails(): void {
+    this.whatsappSentEmails.clear()
+    this.saveWhatsAppSentEmails()
+    console.log('[WhatsApp] Cleared all sent email tracking - fresh start')
+  }
+
+  // Get count of WhatsApp messages sent (for debugging)
+  getWhatsAppSentCount(): number {
+    return this.whatsappSentEmails.size
+  }
+
   // ADDED: Missing showBulkNotification method
   async showBulkNotification(emails: Email[]): Promise<void> {
     console.log(`[Notifications] Showing bulk notification for ${emails.length} high-priority emails`)
@@ -781,26 +821,7 @@ Check your Gmail or MailSense dashboard for details.`
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
         console.error('[WhatsApp] Twilio bulk API error:', errorData)
         
-        // Try SMS fallback for bulk notifications
-        console.log('[WhatsApp] Bulk WhatsApp failed, trying SMS fallback...')
-        const smsResponse = await fetch('/api/send-twilio-sms', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: this.preferences.whatsappNumber.replace('whatsapp:', ''),
-            message: `📧 MailSense Bulk Alert (SMS Fallback)\n\n${message}`,
-          }),
-        })
-
-        if (!smsResponse.ok) {
-          throw new Error(`Both bulk WhatsApp and SMS failed: ${errorData.error}`)
-        }
-
-        const smsResult = await smsResponse.json()
-        console.log(`[SMS] Bulk fallback message sent successfully:`, smsResult.id)
-        return
+        throw new Error(`Bulk WhatsApp notification failed: ${errorData.error}`)
       }
 
       const result = await response.json()
