@@ -94,6 +94,12 @@ export function useGmail(): UseGmailReturn {
     if (!accessToken) {
       setError("Gmail access expired. Please sign out and sign in again to reconnect.")
       setConnectionStatus('failed')
+      
+      // Clear cached emails when token is invalid
+      localStorage.removeItem('mailsense-emails')
+      localStorage.removeItem('mailsense-last-fetch')
+      setEmails([])
+      
       return
     }
 
@@ -153,14 +159,30 @@ export function useGmail(): UseGmailReturn {
       // For first load, don't send notifications for existing emails
       if (lastFetchTime === 0) {
         console.log('[useGmail] First load - not sending notifications for existing emails')
+        
+        // Set the login timestamp to now to only notify for future emails
+        const loginTimestamp = Date.now()
+        localStorage.setItem('mailsense-login-time', loginTimestamp.toString())
+        
         setEmails(parsedEmails)
         setLastFetchTime(currentTime)
         setConnectionStatus('connected')
         return
       }
 
-      // Process new emails for notifications
-      const newEmails = parsedEmails.filter((email) => email.date.getTime() > lastFetchTime)
+      // Process new emails for notifications (only emails received after login)
+      const loginTime = localStorage.getItem('mailsense-login-time')
+      const loginTimestamp = loginTime ? parseInt(loginTime) : currentTime
+      
+      const newEmails = parsedEmails.filter((email) => {
+        const emailTime = email.date.getTime()
+        const isAfterLastFetch = emailTime > lastFetchTime
+        const isAfterLogin = emailTime > loginTimestamp
+        
+        console.log(`[useGmail] Email "${email.subject}": emailTime=${new Date(emailTime).toLocaleString()}, lastFetch=${new Date(lastFetchTime).toLocaleString()}, login=${new Date(loginTimestamp).toLocaleString()}, afterFetch=${isAfterLastFetch}, afterLogin=${isAfterLogin}`)
+        
+        return isAfterLastFetch && isAfterLogin
+      })
 
       if (newEmails.length > 0) {
         console.log(`[useGmail] Found ${newEmails.length} new emails since last fetch`)
@@ -171,7 +193,19 @@ export function useGmail(): UseGmailReturn {
           body: email.snippet, // Use snippet as body for notifications
         }))
 
-        // Process all new emails through notification service
+        // Filter high-priority emails for WhatsApp
+        const highPriorityEmails = emailsForNotification.filter(email => 
+          email.priority === 'high' || email.isImportant
+        )
+        
+        if (highPriorityEmails.length > 0) {
+          console.log(`[useGmail] 🚨 ${highPriorityEmails.length} HIGH-PRIORITY emails will be sent to WhatsApp:`)
+          highPriorityEmails.forEach(email => {
+            console.log(`[useGmail] 📱 WhatsApp: "${email.subject}" from ${email.from.split('<')[0].trim()}`)
+          })
+        }
+
+        // Process all new emails through notification service (WhatsApp will be sent instantly)
         await notificationService.processNewEmails(emailsForNotification)
         
         // Show immediate browser notification for high-priority emails
@@ -252,9 +286,23 @@ export function useGmail(): UseGmailReturn {
       
       // Test connection and fetch fresh emails if needed
       const initializeGmail = async () => {
+        // First check if we have a valid token
+        const accessToken = await getAccessToken()
+        if (!accessToken) {
+          console.log('[useGmail] No valid access token - user needs to reconnect')
+          setError("Gmail access expired. Please sign out and sign in again to reconnect.")
+          setConnectionStatus('failed')
+          
+          // Clear cached emails when token is invalid
+          localStorage.removeItem('mailsense-emails')
+          localStorage.removeItem('mailsense-last-fetch')
+          setEmails([])
+          return
+        }
+        
         await testGmailConnection()
         
-        // Only fetch if cache is stale (older than 2 minutes)
+        // Only fetch if cache is stale (older than 2 minutes) AND we have a valid token
         const lastFetch = localStorage.getItem('mailsense-last-fetch')
         const cacheAge = lastFetch ? Date.now() - parseInt(lastFetch) : Infinity
         const CACHE_DURATION = 2 * 60 * 1000 // 2 minutes
@@ -264,6 +312,7 @@ export function useGmail(): UseGmailReturn {
           await fetchEmails()
         } else {
           console.log('[useGmail] Using cached emails, cache age:', Math.round(cacheAge / 1000), 'seconds')
+          setConnectionStatus('connected') // Mark as connected if using valid cache
         }
       }
       
@@ -320,8 +369,8 @@ export function useGmail(): UseGmailReturn {
       const preferences = notificationService.getPreferences()
       const isWhatsAppEnabled = preferences.whatsappEnabled && preferences.whatsappNumber
       
-      // More frequent checks if WhatsApp is enabled (1 minute vs 2 minutes)
-      const refreshInterval = isWhatsAppEnabled ? 1 * 60 * 1000 : 2 * 60 * 1000
+      // More frequent checks if WhatsApp is enabled (30 seconds vs 2 minutes for instant notifications)
+      const refreshInterval = isWhatsAppEnabled ? 30 * 1000 : 2 * 60 * 1000
       
       console.log(`[useGmail] Starting auto-refresh every ${refreshInterval / 1000} seconds (WhatsApp: ${isWhatsAppEnabled ? 'enabled' : 'disabled'})`)
       

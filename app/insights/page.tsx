@@ -70,40 +70,47 @@ export default function InsightsPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 space-y-4 sm:space-y-0">
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-              <Link href="/dashboard">
-                <Button variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </Link>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center">
-                  <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-blue-600 flex-shrink-0" />
-                  <span className="truncate">Email Insights</span>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          {/* Header Section */}
+          <div className="mb-8 lg:mb-10">
+            <div className="flex flex-col space-y-4 sm:space-y-6">
+              
+              {/* Top Navigation Bar */}
+              <div className="flex items-center justify-between">
+                <Link href="/dashboard">
+                  <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50 border-gray-200">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Dashboard
+                  </Button>
+                </Link>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="hidden sm:block">
+                    <Navigation />
+                  </div>
+                  <Button onClick={logout} variant="outline" size="sm" className="bg-white hover:bg-gray-50 border-gray-200">
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
+
+              {/* Page Title */}
+              <div className="space-y-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
+                  <BarChart3 className="h-7 w-7 sm:h-8 sm:w-8 mr-3 text-blue-600 flex-shrink-0" />
+                  Email Insights
                 </h1>
-                <p className="text-sm sm:text-base text-gray-600">
-                  AI-powered analytics for your email patterns
+                <p className="text-base text-gray-600 max-w-2xl">
+                  AI-powered analytics for your email patterns and productivity
                 </p>
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 lg:space-x-4 w-full sm:w-auto">
-              <div className="hidden sm:block">
+
+              {/* Mobile Navigation */}
+              <div className="sm:hidden">
                 <Navigation />
               </div>
-              <Button onClick={logout} variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
-                Sign Out
-              </Button>
             </div>
-          </div>
-
-          {/* Mobile Navigation */}
-          <div className="sm:hidden mb-4">
-            <Navigation />
           </div>
 
           {loading && emails.length === 0 ? (

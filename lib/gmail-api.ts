@@ -36,15 +36,17 @@ export class GmailAPI {
 
   async fetchEmails(maxResults = 50): Promise<EmailMessage[]> {
     try {
-      console.log('[Gmail API] Fetching emails...')
+      console.log('[Gmail API] Fetching emails with labels and importance...')
       
       // First, verify the access token is valid
       if (!this.accessToken) {
         throw new Error('No access token provided')
       }
 
+      // Fetch both read and unread emails to get a complete picture
+      // Include important emails even if they're read
       const response = await fetch(
-        `${this.baseURL}/users/me/messages?maxResults=${maxResults}&q=is:unread`,
+        `${this.baseURL}/users/me/messages?maxResults=${maxResults}&q=in:inbox`,
         {
           method: 'GET',
           headers: {
@@ -57,7 +59,12 @@ export class GmailAPI {
 
       // Handle authentication errors
       if (response.status === 401) {
-        throw new Error('Gmail access token expired. Please sign in again.')
+        // Clear invalid token immediately
+        localStorage.removeItem("gmail_access_token")
+        localStorage.removeItem("gmail_refresh_token")
+        localStorage.removeItem("gmail_token_expiry")
+        localStorage.removeItem("gmail_token_last_validation")
+        throw new Error('Gmail access expired. Please sign out and sign in again to reconnect.')
       }
 
       if (response.status === 403) {
@@ -71,10 +78,10 @@ export class GmailAPI {
       }
 
       const data = await response.json()
-      console.log(`[Gmail API] Found ${data.messages?.length || 0} unread messages`)
+      console.log(`[Gmail API] Found ${data.messages?.length || 0} inbox messages`)
 
       if (!data.messages || data.messages.length === 0) {
-        console.log('[Gmail API] No unread messages found')
+        console.log('[Gmail API] No inbox messages found')
         return []
       }
 

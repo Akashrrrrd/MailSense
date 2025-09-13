@@ -32,10 +32,12 @@ export interface NotificationPreferences {
 class NotificationService {
   private preferences: NotificationPreferences
   private processedEmails: Set<string> = new Set()
+  private whatsappSentEmails: Set<string> = new Set() // Track WhatsApp-sent emails separately
 
   constructor() {
     this.preferences = this.loadPreferences()
     this.initializeProcessedEmails()
+    this.initializeWhatsAppSentEmails()
   }
 
   private loadPreferences(): NotificationPreferences {
@@ -84,6 +86,31 @@ class NotificationService {
     }
   }
 
+  private initializeWhatsAppSentEmails() {
+    if (typeof window === 'undefined') return
+    
+    try {
+      const stored = localStorage.getItem('mailsense-whatsapp-sent-emails')
+      if (stored) {
+        this.whatsappSentEmails = new Set(JSON.parse(stored))
+        console.log(`[WhatsApp] Loaded ${this.whatsappSentEmails.size} previously sent email IDs`)
+      }
+    } catch (error) {
+      console.error('Failed to load WhatsApp sent emails:', error)
+    }
+  }
+
+  private saveWhatsAppSentEmails() {
+    if (typeof window === 'undefined') return
+    
+    try {
+      localStorage.setItem('mailsense-whatsapp-sent-emails', JSON.stringify([...this.whatsappSentEmails]))
+      console.log(`[WhatsApp] Saved ${this.whatsappSentEmails.size} sent email IDs to storage`)
+    } catch (error) {
+      console.error('Failed to save WhatsApp sent emails:', error)
+    }
+  }
+
   private saveProcessedEmails() {
     if (typeof window === 'undefined') return
     
@@ -123,12 +150,15 @@ class NotificationService {
 
   async processNewEmails(emails: Email[]): Promise<void> {
     console.log(`[Notifications] Processing ${emails.length} emails for notifications`)
+    console.log(`[WhatsApp] Currently tracking ${this.whatsappSentEmails.size} previously sent emails`)
     
     for (const email of emails) {
       if (this.shouldNotify(email)) {
-        console.log(`[Notifications] Sending notification for email: ${email.id}`)
+        console.log(`[Notifications] Sending notification for email: ${email.id} - "${email.subject}"`)
         await this.showNotification(email)
         this.processedEmails.add(email.id)
+      } else {
+        console.log(`[Notifications] Skipping email: ${email.id} - "${email.subject}" (already processed or doesn't meet criteria)`)
       }
     }
     
@@ -140,12 +170,25 @@ class NotificationService {
 
     const promises: Promise<void>[] = []
 
+    // Desktop notifications for all emails (if enabled)
     if (this.preferences.desktopEnabled && !this.isInQuietHours()) {
       promises.push(this.showDesktopNotification(email))
     }
 
-    if (this.preferences.whatsappEnabled && this.preferences.whatsappNumber) {
-      promises.push(this.sendWhatsAppNotification(email))
+    // WhatsApp notifications ONLY for high priority emails (and never sent before)
+    if (this.preferences.whatsappEnabled && 
+        this.preferences.whatsappNumber && 
+        (email.priority === "high" || email.isImportant)) {
+      
+      // Check if this email was already sent to WhatsApp
+      if (this.whatsappSentEmails.has(email.id)) {
+        console.log(`[WhatsApp] ⚠️ SKIPPING - Email already sent to WhatsApp: ${email.subject} (ID: ${email.id})`)
+      } else {
+        console.log(`[WhatsApp] ✅ Sending NEW high-priority email to WhatsApp: ${email.subject} (ID: ${email.id})`)
+        promises.push(this.sendWhatsAppNotification(email))
+      }
+    } else if (this.preferences.whatsappEnabled && this.preferences.whatsappNumber) {
+      console.log(`[WhatsApp] Skipping medium/low priority email: ${email.subject} (priority: ${email.priority})`)
     }
 
     await Promise.allSettled(promises)
@@ -186,8 +229,8 @@ class NotificationService {
       
       console.log(`[WhatsApp] Sending notification for email: ${email.id}`)
       
-      // Try Vonage first (better limits), fallback to Twilio if needed
-      let response = await fetch('/api/send-vonage-whatsapp', {
+      // Send WhatsApp message via Twilio
+      const response = await fetch('/api/send-twilio-whatsapp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,28 +241,20 @@ class NotificationService {
         })
       })
 
-      // If Vonage fails, try Twilio as fallback
       if (!response.ok) {
-        console.log('[WhatsApp] Vonage failed, trying Twilio fallback...')
-        response = await fetch('/api/send-whatsapp', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: this.preferences.whatsappNumber,
-            message: whatsappMessage
-          })
-        })
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.error || `HTTP ${response.status}`)
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('[WhatsApp] Twilio API error:', errorData)
+        throw new Error(`WhatsApp notification failed: ${errorData.error}`)
       }
 
       const result = await response.json()
-      console.log(`[WhatsApp] Message sent successfully via Vonage:`, result.id || 'No message ID received')
+      console.log(`[WhatsApp] ✅ Message sent successfully via Twilio:`, result.id || 'No message ID received')
+      
+      // Mark this email as sent to WhatsApp (NEVER send again)
+      this.whatsappSentEmails.add(email.id)
+      this.saveWhatsAppSentEmails()
+      console.log(`[WhatsApp] 🔒 Email ${email.id} marked as SENT - will never be sent again`)
+      
     } catch (error: any) {
       console.error('Failed to send WhatsApp notification:', error)
       throw new Error(`Failed to send WhatsApp notification: ${error.message}`)
@@ -310,6 +345,12 @@ class NotificationService {
     return indicators.some(indicator => text.includes(indicator))
   }
 
+  private isAcademicEmail(email: Email): boolean {
+    const indicators = ['professor', 'assistant professor', 'institute', 'university', 'college', 'academic', 'edu', 'test mail', 'placement']
+    const text = `${email.from} ${email.subject}`.toLowerCase()
+    return indicators.some(indicator => text.includes(indicator))
+  }
+
   private createJobAlertSummary(email: Email): string {
     const senderName = this.extractSenderName(email.from)
     
@@ -363,63 +404,106 @@ class NotificationService {
     const fromDomain = this.extractDomain(email.from)
     const timeAgo = this.getTimeAgo(email.date)
     
-    // Clean up AI summary - if it's messy, use smart fallback
-    let cleanSummary = this.cleanAISummary(aiSummary)
+    // Create a clean, professional summary
+    let cleanSummary = this.createProfessionalSummary(email, aiSummary)
     
-    // If AI summary is null/messy, use intelligent fallback
-    if (!cleanSummary) {
-      cleanSummary = this.createFallbackSummary(email)
-    }
-    
-    return `*From:* ${fromName}${fromDomain ? ` (${fromDomain})` : ''}
+    // Clean, professional WhatsApp message format (NO EMOJIS)
+    return `*MailSense Email Alert*
+
+*From:* ${fromName}${fromDomain ? ` (${fromDomain})` : ''}
 *Subject:* ${email.subject}
 *Received:* ${timeAgo}
 
-*AI Summary:*
+*Summary:*
 ${cleanSummary}
 
-_Powered by MailSense AI_`
+Powered by MailSense AI`
+  }
+
+  private createProfessionalSummary(email: Email, aiSummary: string): string {
+    const senderName = this.extractSenderName(email.from)
+    const subject = email.subject
+    
+    // Always use clean, predictable summaries instead of messy AI content
+    // Determine email type and create appropriate professional summary
+    
+    if (this.isJobAlert(email)) {
+      return `New job opportunities available from ${senderName}.\nCheck the latest positions and apply directly.`
+    }
+    
+    if (this.isSecurityAlert(email)) {
+      return `Security notification from ${senderName}.\nPlease review your account activity immediately.`
+    }
+    
+    if (this.isMeetingOrCalendar(email)) {
+      return `Meeting or calendar update from ${senderName}.\nCheck for schedule changes or new appointments.`
+    }
+    
+    if (this.isNewsletterOrPromo(email)) {
+      return `Newsletter update from ${senderName}.\nNew content and updates are available.`
+    }
+    
+    // Check if it's an academic/educational email
+    if (this.isAcademicEmail(email)) {
+      return `Academic communication from ${senderName}.\nPlease check your email for important details.`
+    }
+    
+    // Generic professional summary - always clean and readable
+    const shortSubject = subject.length > 50 ? subject.substring(0, 47) + '...' : subject
+    return `New message from ${senderName}.\nRegarding: ${shortSubject}`
   }
 
   private cleanAISummary(summary: string): string {
-    // Aggressive cleaning for messy email content
+    if (!summary || typeof summary !== 'string') {
+      return null
+    }
+    
+    // Clean up the AI summary
     let cleaned = summary
       .replace(/\[image:.*?\]/gi, '') // Remove [image: ...] references
       .replace(/<[^>]*>/g, '') // Remove HTML tags
       .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
       .replace(/utm_[^&\s]+/g, '') // Remove UTM parameters
       .replace(/[?&][a-zA-Z0-9_]+=[\w%.-]+/g, '') // Remove URL parameters
-      .replace(/\b[A-Z0-9]{10,}\b/g, '') // Remove long alphanumeric codes
-      .replace(/\.\.\./g, '') // Remove ellipsis
+      .replace(/\b[A-Z0-9]{10,}\b/g, '') // Remove long codes
       .replace(/\s+/g, ' ') // Normalize whitespace
-      .replace(/[^\w\s.,!?-]/g, ' ') // Remove special characters except basic punctuation
+      .replace(/^\W+|\W+$/g, '') // Remove leading/trailing non-word chars
       .trim()
     
-    // If the cleaned content is still messy or too short, return null to trigger fallback
+    // If too short or messy, return null
     if (cleaned.length < 20 || this.isMessyContent(cleaned)) {
       return null
     }
     
-    // Split into lines and ensure we have exactly 2 meaningful lines
-    const lines = cleaned.split('\n').filter(line => line.trim().length > 10)
+    // Create clean, readable summary (max 2 lines, 120 chars total)
+    const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 10)
     
-    if (lines.length >= 2) {
-      // Use first two lines, ensure they're complete
-      const line1 = this.cleanLine(lines[0])
-      const line2 = this.cleanLine(lines[1])
-      return `${line1}\n${line2}`
-    } else if (lines.length === 1 && lines[0].length > 20) {
-      // Split single line into two parts
-      const words = lines[0].split(' ')
-      if (words.length >= 6) {
-        const midPoint = Math.ceil(words.length / 2)
-        const line1 = words.slice(0, midPoint).join(' ')
-        const line2 = words.slice(midPoint).join(' ')
-        return `${line1}\n${line2}`
+    if (sentences.length >= 2) {
+      const line1 = this.cleanLine(sentences[0])
+      const line2 = this.cleanLine(sentences[1])
+      
+      if (line1.length > 15 && line2.length > 15) {
+        return `${line1}.\n${line2}.`
       }
     }
     
-    // Content is too messy or short, return null to trigger smart fallback
+    // Single sentence - split intelligently
+    if (cleaned.length > 60) {
+      const words = cleaned.split(' ')
+      const midPoint = Math.ceil(words.length / 2)
+      const line1 = words.slice(0, midPoint).join(' ')
+      const line2 = words.slice(midPoint).join(' ')
+      
+      if (line1.length > 15 && line2.length > 15) {
+        return `${line1.trim()}.\n${line2.trim()}.`
+      }
+    }
+    
+    // Return single line if it's good quality
+    if (cleaned.length >= 20 && cleaned.length <= 80) {
+      return cleaned + '.'
+    }
+    
     return null
   }
 
@@ -440,7 +524,8 @@ _Powered by MailSense AI_`
     return line
       .trim()
       .replace(/\s+/g, ' ')
-      .substring(0, 80) // Reasonable max length
+      .replace(/^\W+|\W+$/g, '') // Remove leading/trailing punctuation
+      .substring(0, 60) // Max 60 chars per line for WhatsApp readability
       .trim()
   }
 
@@ -635,6 +720,17 @@ _Powered by MailSense AI_`
     this.saveProcessedEmails()
   }
 
+  clearWhatsAppSentEmails(): void {
+    this.whatsappSentEmails.clear()
+    this.saveWhatsAppSentEmails()
+    console.log('[WhatsApp] Cleared all sent email tracking - fresh start')
+  }
+
+  // Get count of WhatsApp messages sent (for debugging)
+  getWhatsAppSentCount(): number {
+    return this.whatsappSentEmails.size
+  }
+
   // ADDED: Missing showBulkNotification method
   async showBulkNotification(emails: Email[]): Promise<void> {
     console.log(`[Notifications] Showing bulk notification for ${emails.length} high-priority emails`)
@@ -688,8 +784,8 @@ _Powered by MailSense AI_`
 
   private async sendBulkWhatsAppNotification(emails: Email[]): Promise<void> {
     try {
-      const message = `🔔 *MailSense Alert*
-_Multiple High Priority Emails_
+      const message = `*MailSense Email Alert*
+Multiple High Priority Emails
 
 *${emails.length} Important Emails Received*
 
@@ -698,19 +794,19 @@ ${emails.slice(0, 5).map((email, index) => {
   const fromDomain = this.extractDomain(email.from)
   const timeAgo = this.getTimeAgo(email.date)
   return `${index + 1}. *${fromName}*${fromDomain ? ` (${fromDomain})` : ''}
-   📧 ${email.subject.substring(0, 45)}${email.subject.length > 45 ? '...' : ''}
-   ⏰ ${timeAgo}`
+   Subject: ${email.subject.substring(0, 45)}${email.subject.length > 45 ? '...' : ''}
+   Received: ${timeAgo}`
 }).join('\n\n')}
 
-${emails.length > 5 ? `\n_...and ${emails.length - 5} more important emails_` : ''}
+${emails.length > 5 ? `\n...and ${emails.length - 5} more important emails` : ''}
 
-_All emails classified as HIGH priority by MailSense AI_
-_Check your Gmail or MailSense dashboard for details_`
+All emails classified as HIGH priority by MailSense AI.
+Check your Gmail or MailSense dashboard for details.`
       
       console.log(`[WhatsApp] Sending bulk notification for ${emails.length} emails`)
       
-      // Try Vonage first, fallback to Twilio
-      let response = await fetch('/api/send-vonage-whatsapp', {
+      // Send bulk WhatsApp message via Twilio
+      const response = await fetch('/api/send-twilio-whatsapp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -721,24 +817,11 @@ _Check your Gmail or MailSense dashboard for details_`
         })
       })
 
-      // Fallback to Twilio if Vonage fails
       if (!response.ok) {
-        console.log('[WhatsApp] Vonage bulk failed, trying Twilio fallback...')
-        response = await fetch('/api/send-whatsapp', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: this.preferences.whatsappNumber,
-            message: message
-          })
-        })
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.error || `HTTP ${response.status}`)
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('[WhatsApp] Twilio bulk API error:', errorData)
+        
+        throw new Error(`Bulk WhatsApp notification failed: ${errorData.error}`)
       }
 
       const result = await response.json()

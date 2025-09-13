@@ -1,46 +1,46 @@
 "use client"
 
-import { Shield, Lock, Eye, Trash2 } from "lucide-react"
+import { Shield, Lock, Eye, Server } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 export function PrivacyBadge() {
   return (
-    <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
-      <CardContent className="p-4">
-        <div className="flex items-center space-x-3 mb-3">
-          <Shield className="h-6 w-6 text-green-600" />
-          <h3 className="font-semibold text-green-900">Privacy-First Design</h3>
-          <Badge variant="secondary" className="bg-green-100 text-green-800">
-            Zero Storage
+    <Card className="border-gray-200 bg-gray-50">
+      <CardContent className="p-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <Shield className="h-6 w-6 text-blue-600" />
+          <h3 className="font-semibold text-gray-900">Security & Privacy</h3>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            Enterprise Grade
           </Badge>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center space-x-2">
-            <Eye className="h-4 w-4 text-green-600" />
-            <span className="text-green-800">Read-only Gmail access</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center space-x-3">
+            <Eye className="h-4 w-4 text-gray-600" />
+            <span className="text-gray-700">Read-only access</span>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Trash2 className="h-4 w-4 text-green-600" />
-            <span className="text-green-800">No email storage ever</span>
+          <div className="flex items-center space-x-3">
+            <Server className="h-4 w-4 text-gray-600" />
+            <span className="text-gray-700">Zero data storage</span>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Lock className="h-4 w-4 text-green-600" />
-            <span className="text-green-800">Google OAuth security</span>
+          <div className="flex items-center space-x-3">
+            <Lock className="h-4 w-4 text-gray-600" />
+            <span className="text-gray-700">Google OAuth</span>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Shield className="h-4 w-4 text-green-600" />
-            <span className="text-green-800">Revoke access anytime</span>
+          <div className="flex items-center space-x-3">
+            <Shield className="h-4 w-4 text-gray-600" />
+            <span className="text-gray-700">Revocable access</span>
           </div>
         </div>
         
-        <div className="mt-3 pt-3 border-t border-green-200">
-          <p className="text-xs text-green-700">
-            ✅ Your emails are processed in real-time and never stored on our servers
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <p className="text-xs text-gray-600">
+            Real-time processing with no persistent data storage
           </p>
         </div>
       </CardContent>

@@ -37,7 +37,7 @@ export function EmailPriorityTabs({ emails, loading, error, onMarkAsRead, onRefr
         >
           <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
           <span className="text-xs sm:text-sm">High</span>
-          <Badge variant="destructive" className="text-xs px-1 py-0 h-4 min-w-[16px] flex items-center justify-center">
+          <Badge className="text-xs px-1 py-0 h-4 min-w-[16px] flex items-center justify-center bg-red-600 text-white border-red-600">
             {highPriorityEmails.length}
           </Badge>
         </TabsTrigger>

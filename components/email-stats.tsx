@@ -69,7 +69,7 @@ export function EmailStats({ totalCount, unreadCount, highPriorityCount, loading
               <>
                 {highPriorityCount}
                 {highPriorityCount > 0 && (
-                  <Badge variant="destructive" className="ml-2 text-xs px-2 py-0.5 h-5 text-white">
+                  <Badge className="ml-2 text-xs px-2 py-0.5 h-5 bg-red-600 text-white border-red-600">
                     URGENT
                   </Badge>
                 )}

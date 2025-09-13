@@ -40,7 +40,7 @@ export function EmailList({ emails, loading, error, onMarkAsRead, onRefresh }: E
   const getPriorityColor = (priority: "high" | "medium" | "low") => {
     switch (priority) {
       case "high":
-        return { variant: "destructive" as const, className: "text-white" }
+        return { variant: "destructive" as const, className: "bg-red-600 text-white border-red-600" }
       case "medium":
         return { variant: "secondary" as const, className: "" }
       case "low":

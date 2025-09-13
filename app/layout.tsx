@@ -5,8 +5,8 @@ import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "MailSense - AI Email Intelligence",
-  description: "Smart email management with AI-powered classification and notifications",
+  title: "MailSense - Professional Email Summarization",
+  description: "AI-powered email summarization delivered to WhatsApp for business professionals",
   generator: "v0.app",
 }
 
