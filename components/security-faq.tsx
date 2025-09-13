@@ -8,28 +8,28 @@ import { Button } from "@/components/ui/button"
 const faqs = [
   {
     icon: Eye,
-    question: "Can MailSense read my private emails?",
-    answer: "MailSense only processes email metadata (sender, subject, date) to classify priority. The actual email content is analyzed in real-time and immediately discarded. We never store or read your private email content."
+    question: "What data does MailSense access?",
+    answer: "MailSense accesses email metadata including sender, subject, and timestamp for summarization. Email content is processed in real-time and never stored on our servers."
   },
   {
     icon: Trash2,
-    question: "Do you store my emails on your servers?",
-    answer: "No, never. MailSense uses a zero-storage architecture. Your emails are processed in real-time through Gmail's API and only metadata (like sender and subject) is temporarily cached for 2 minutes to improve performance."
+    question: "Is my email data stored anywhere?",
+    answer: "No. MailSense uses a zero-storage architecture. All email processing happens in real-time through secure APIs with no persistent data storage."
   },
   {
     icon: Lock,
-    question: "How secure is the Gmail connection?",
-    answer: "MailSense uses Google OAuth, the same security system used by Google Workspace and other enterprise applications. All connections are encrypted with HTTPS and we only request read-only permissions."
+    question: "How is my Gmail account secured?",
+    answer: "MailSense uses Google OAuth 2.0, the same enterprise-grade security used by Google Workspace. All connections are encrypted and we maintain read-only access permissions."
   },
   {
     icon: Settings,
-    question: "Can I revoke MailSense's access to my Gmail?",
-    answer: "Yes, absolutely. You can revoke access anytime through your Google Account settings (myaccount.google.com → Security → Third-party apps). MailSense will immediately stop working and all cached data is automatically deleted."
+    question: "Can I revoke access at any time?",
+    answer: "Yes. You can revoke MailSense access through your Google Account security settings at any time. All processing will immediately cease upon revocation."
   },
   {
     icon: Shield,
-    question: "What permissions does MailSense need?",
-    answer: "MailSense only needs 'gmail.readonly' (to read emails) and 'gmail.modify' (to mark emails as read). We cannot send emails, delete emails, or access other Google services. These are the minimal permissions needed for the service to work."
+    question: "What permissions are required?",
+    answer: "MailSense requires minimal read-only permissions to access email metadata for summarization. We cannot send, delete, or modify your emails in any way."
   }
 ]
 
@@ -77,14 +77,14 @@ export function SecurityFAQ() {
           </div>
         ))}
         
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-start space-x-3">
-            <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <Shield className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
             <div>
-              <h4 className="font-medium text-blue-900 text-sm">Still have security concerns?</h4>
-              <p className="text-blue-800 text-xs mt-1">
-                Contact our security team at security@mailsense.com or review our detailed 
-                <a href="/privacy" className="underline ml-1">Privacy Policy</a>
+              <h4 className="font-medium text-gray-900 text-sm">Additional Questions?</h4>
+              <p className="text-gray-600 text-xs mt-1">
+                Contact our support team or review our 
+                <a href="/privacy" className="underline ml-1 text-blue-600">Privacy Policy</a>
               </p>
             </div>
           </div>

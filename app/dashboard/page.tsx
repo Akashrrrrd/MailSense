@@ -8,6 +8,7 @@ import { EmailPriorityTabs } from "@/components/email-priority-tabs"
 import { EmailStats } from "@/components/email-stats"
 import { EmailSearch } from "@/components/email-search"
 import { Navigation } from "@/components/navigation"
+import { GmailConnectionStatus } from "@/components/gmail-connection-status"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -42,7 +43,7 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-gray-50">
         <div className="w-full max-w-[100vw] overflow-x-hidden px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 space-y-4 sm:space-y-0">
@@ -84,42 +85,11 @@ export default function DashboardPage() {
             <Navigation />
           </div>
 
-          {/* Connection Status Alert */}
-          {connectionStatus === 'failed' && (
-            <div className="mb-4 sm:mb-6">
-              <Card className="border-red-200 bg-red-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-red-900 text-sm sm:text-base">Gmail Connection Issue</h3>
-                      <p className="text-red-700 text-xs sm:text-sm mt-1">
-                        Please sign out and sign in again to reconnect your Gmail account.
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button 
-                        onClick={refreshAccess} 
-                        size="sm" 
-                        variant="outline" 
-                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                      >
-                        Reconnect
-                      </Button>
-                      <Button 
-                        onClick={logout} 
-                        size="sm" 
-                        variant="outline" 
-                        className="border-red-300 text-red-700 hover:bg-red-100"
-                      >
-                        Sign Out
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          {/* Gmail Connection Status */}
+          <GmailConnectionStatus 
+            connectionStatus={connectionStatus} 
+            onReconnect={refreshEmails}
+          />
 
           {/* Stats */}
           <div className="mb-6 sm:mb-8">
@@ -198,7 +168,7 @@ export default function DashboardPage() {
                       {highPriorityEmails.slice(0, 5).map((email) => (
                         <div key={email.id} className="p-2 sm:p-3 bg-red-50 rounded-lg border border-red-200">
                           <div className="flex items-center justify-between mb-1">
-                            <Badge variant="destructive" className="text-xs text-white">
+                            <Badge className="text-xs bg-red-600 text-white border-red-600">
                               URGENT
                             </Badge>
                             {!email.isRead && (
@@ -224,34 +194,31 @@ export default function DashboardPage() {
               </Card>
 
               {/* WhatsApp Setup */}
-              <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+              <Card className="border-gray-200">
                 <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="text-base sm:text-lg flex items-center text-green-800">
-                    <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-2 flex-shrink-0" />
-                    <span className="truncate">WhatsApp Alerts</span>
+                  <CardTitle className="text-base sm:text-lg flex items-center">
+                    <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2 flex-shrink-0" />
+                    <span className="truncate">WhatsApp Notifications</span>
                   </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm text-green-700">
-                    Get instant notifications for high-priority emails
+                  <CardDescription className="text-xs sm:text-sm">
+                    Configure delivery preferences for email summaries
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-xs text-green-800">AI-powered smart summaries</span>
+                    <div className="text-xs text-gray-600">
+                      • AI-powered email summaries
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-xs text-green-800">Only high-priority emails</span>
+                    <div className="text-xs text-gray-600">
+                      • Priority-based filtering
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-xs text-green-800">Instant mobile notifications</span>
+                    <div className="text-xs text-gray-600">
+                      • Instant mobile delivery
                     </div>
                     <Link href="/settings">
-                      <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white mt-3">
+                      <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-3">
                         <MessageCircle className="h-4 w-4 mr-2" />
-                        Setup WhatsApp
+                        Configure Notifications
                       </Button>
                     </Link>
                   </div>
@@ -278,14 +245,14 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs sm:text-sm text-gray-600">High Priority</span>
-                    <Badge variant="destructive" className="text-xs">
+                    <Badge className="text-xs bg-red-600 text-white border-red-600">
                       {highPriorityEmails.length}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs sm:text-sm text-gray-600">AI Accuracy</span>
-                    <Badge variant="outline" className="text-green-600 text-xs">
-                      94%
+                    <span className="text-xs sm:text-sm text-gray-600">Processing Status</span>
+                    <Badge variant="outline" className="text-blue-600 text-xs">
+                      Active
                     </Badge>
                   </div>
                 </CardContent>

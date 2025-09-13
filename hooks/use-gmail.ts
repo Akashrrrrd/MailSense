@@ -94,6 +94,12 @@ export function useGmail(): UseGmailReturn {
     if (!accessToken) {
       setError("Gmail access expired. Please sign out and sign in again to reconnect.")
       setConnectionStatus('failed')
+      
+      // Clear cached emails when token is invalid
+      localStorage.removeItem('mailsense-emails')
+      localStorage.removeItem('mailsense-last-fetch')
+      setEmails([])
+      
       return
     }
 
@@ -252,9 +258,23 @@ export function useGmail(): UseGmailReturn {
       
       // Test connection and fetch fresh emails if needed
       const initializeGmail = async () => {
+        // First check if we have a valid token
+        const accessToken = await getAccessToken()
+        if (!accessToken) {
+          console.log('[useGmail] No valid access token - user needs to reconnect')
+          setError("Gmail access expired. Please sign out and sign in again to reconnect.")
+          setConnectionStatus('failed')
+          
+          // Clear cached emails when token is invalid
+          localStorage.removeItem('mailsense-emails')
+          localStorage.removeItem('mailsense-last-fetch')
+          setEmails([])
+          return
+        }
+        
         await testGmailConnection()
         
-        // Only fetch if cache is stale (older than 2 minutes)
+        // Only fetch if cache is stale (older than 2 minutes) AND we have a valid token
         const lastFetch = localStorage.getItem('mailsense-last-fetch')
         const cacheAge = lastFetch ? Date.now() - parseInt(lastFetch) : Infinity
         const CACHE_DURATION = 2 * 60 * 1000 // 2 minutes
@@ -264,6 +284,7 @@ export function useGmail(): UseGmailReturn {
           await fetchEmails()
         } else {
           console.log('[useGmail] Using cached emails, cache age:', Math.round(cacheAge / 1000), 'seconds')
+          setConnectionStatus('connected') // Mark as connected if using valid cache
         }
       }
       

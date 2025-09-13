@@ -4,68 +4,64 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { 
-  ArrowRight, 
-  Mail, 
-  Shield, 
-  Brain, 
-  MessageCircle, 
-  Lock, 
-  Eye, 
-  Trash2, 
-  Clock,
+import {
+  ArrowRight,
+  Mail,
+  Shield,
+  Brain,
+  MessageCircle,
+  Lock,
+  Eye,
   CheckCircle,
+  Database,
+  Clock,
   AlertTriangle,
   Smartphone,
-  Server,
-  Database,
-  ArrowDown
+  Server
 } from "lucide-react"
 
 export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-        
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-16">
+          <Link href="/" className="inline-block mb-8">
+            <Button variant="outline" className="bg-white border-gray-300">
+              ← Back to Home
+            </Button>
+          </Link>
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
             How MailSense Works
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Understand exactly how MailSense processes your emails with privacy-first AI intelligence
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Professional email summarization delivered to WhatsApp in four simple steps
           </p>
-          <div className="flex justify-center">
-            <Link href="/">
-              <Button variant="outline" className="bg-white">
-                ← Back to Home
-              </Button>
-            </Link>
-          </div>
         </div>
 
         {/* Security Promise */}
-        <Card className="mb-12 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+        <Card className="mb-12 border-gray-200 bg-gray-50">
           <CardContent className="p-6 text-center">
             <div className="flex justify-center mb-4">
-              <Shield className="h-12 w-12 text-green-600" />
+              <Shield className="h-12 w-12 text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-green-900 mb-2">Our Privacy Promise</h2>
-            <p className="text-green-800 text-lg mb-4">
-              Your emails are processed in real-time and never stored on our servers
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Security & Privacy</h2>
+            <p className="text-gray-700 text-lg mb-4">
+              Enterprise-grade security with real-time processing and zero data storage
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Badge className="bg-green-100 text-green-800 px-3 py-1">
+              <Badge className="bg-gray-100 text-gray-800 px-3 py-1">
                 <Lock className="h-4 w-4 mr-1" />
-                Zero Email Storage
+                Zero Storage
               </Badge>
-              <Badge className="bg-blue-100 text-blue-800 px-3 py-1">
+              <Badge className="bg-gray-100 text-gray-800 px-3 py-1">
                 <Eye className="h-4 w-4 mr-1" />
-                Read-Only Access
+                Read-Only
               </Badge>
-              <Badge className="bg-purple-100 text-purple-800 px-3 py-1">
-                <Trash2 className="h-4 w-4 mr-1" />
-                Auto-Delete Cache
+              <Badge className="bg-gray-100 text-gray-800 px-3 py-1">
+                <Database className="h-4 w-4 mr-1" />
+                Auto-Cleanup
               </Badge>
             </div>
           </CardContent>
@@ -74,23 +70,23 @@ export default function HowItWorksPage() {
         {/* Step-by-Step Process */}
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
-            The Complete Process
+            How It Works
           </h2>
-          
-          <div className="space-y-8">
-            
+
+          <div className="space-y-6">
+
             {/* Step 1: Authentication */}
-            <Card className="relative">
-              <div className="absolute -left-4 top-6 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                1
-              </div>
-              <CardHeader className="pl-8">
+            <Card className="border-gray-200">
+              <CardHeader>
                 <CardTitle className="flex items-center text-xl">
+                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4 text-sm">
+                    1
+                  </div>
                   <Shield className="h-6 w-6 text-blue-600 mr-3" />
                   Secure Authentication
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pl-8">
+              <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="font-semibold mb-2">What Happens:</h4>
@@ -114,34 +110,30 @@ export default function HowItWorksPage() {
                     </ul>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-green-800">Security Features:</h4>
+                    <h4 className="font-semibold mb-2 text-gray-800">Security Features:</h4>
                     <ul className="space-y-1 text-sm text-gray-700">
-                      <li>• Google's enterprise-grade OAuth</li>
-                      <li>• Read-only permissions only</li>
-                      <li>• No password storage</li>
-                      <li>• Revoke access anytime</li>
+                      <li>• Enterprise OAuth 2.0</li>
+                      <li>• Read-only permissions</li>
+                      <li>• No credential storage</li>
+                      <li>• Revocable access</li>
                     </ul>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="flex justify-center">
-              <ArrowDown className="h-8 w-8 text-gray-400" />
-            </div>
-
             {/* Step 2: Email Fetching */}
-            <Card className="relative">
-              <div className="absolute -left-4 top-6 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                2
-              </div>
-              <CardHeader className="pl-8">
+            <Card className="border-gray-200">
+              <CardHeader>
                 <CardTitle className="flex items-center text-xl">
+                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4 text-sm">
+                    2
+                  </div>
                   <Mail className="h-6 w-6 text-blue-600 mr-3" />
                   Smart Email Fetching
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pl-8">
+              <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="font-semibold mb-2">What Happens:</h4>
@@ -177,22 +169,18 @@ export default function HowItWorksPage() {
               </CardContent>
             </Card>
 
-            <div className="flex justify-center">
-              <ArrowDown className="h-8 w-8 text-gray-400" />
-            </div>
-
             {/* Step 3: AI Classification */}
-            <Card className="relative">
-              <div className="absolute -left-4 top-6 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                3
-              </div>
-              <CardHeader className="pl-8">
+            <Card className="border-gray-200">
+              <CardHeader>
                 <CardTitle className="flex items-center text-xl">
+                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4 text-sm">
+                    3
+                  </div>
                   <Brain className="h-6 w-6 text-blue-600 mr-3" />
                   AI-Powered Classification
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pl-8">
+              <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="font-semibold mb-2">What Happens:</h4>
@@ -216,34 +204,30 @@ export default function HowItWorksPage() {
                     </ul>
                   </div>
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-purple-800">AI Features:</h4>
+                    <h4 className="font-semibold mb-2 text-gray-800">AI Capabilities:</h4>
                     <ul className="space-y-1 text-sm text-gray-700">
-                      <li>• 94% classification accuracy</li>
-                      <li>• Gmail-style importance detection</li>
-                      <li>• Business context awareness</li>
-                      <li>• Time-sensitive email recognition</li>
+                      <li>• Advanced classification</li>
+                      <li>• Priority detection</li>
+                      <li>• Context awareness</li>
+                      <li>• Time-sensitive recognition</li>
                     </ul>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="flex justify-center">
-              <ArrowDown className="h-8 w-8 text-gray-400" />
-            </div>
-
             {/* Step 4: WhatsApp Notifications */}
-            <Card className="relative">
-              <div className="absolute -left-4 top-6 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                4
-              </div>
-              <CardHeader className="pl-8">
+            <Card className="border-gray-200">
+              <CardHeader>
                 <CardTitle className="flex items-center text-xl">
+                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4 text-sm">
+                    4
+                  </div>
                   <MessageCircle className="h-6 w-6 text-blue-600 mr-3" />
                   Smart WhatsApp Alerts
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pl-8">
+              <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="font-semibold mb-2">What Happens:</h4>
@@ -267,17 +251,17 @@ export default function HowItWorksPage() {
                     </ul>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-green-800">Message Format:</h4>
+                    <h4 className="font-semibold mb-2 text-gray-800">Message Format:</h4>
                     <div className="text-xs font-mono bg-white p-3 rounded border">
-                      <div className="text-green-600 font-bold">From: HR Team (company)</div>
+                      <div className="text-blue-600 font-bold">From: HR Team (company)</div>
                       <div className="text-gray-600">Subject: Interview Confirmation</div>
                       <div className="text-gray-600">Received: 5m ago</div>
                       <div className="mt-2 text-gray-800">
-                        <div className="font-semibold">AI Summary:</div>
+                        <div className="font-semibold">Summary:</div>
                         <div>Your final interview is tomorrow at 2 PM</div>
                         <div>Please prepare technical questions</div>
                       </div>
-                      <div className="text-gray-500 text-xs mt-2">Powered by MailSense AI</div>
+                      <div className="text-gray-500 text-xs mt-2">MailSense Professional</div>
                     </div>
                   </div>
                 </div>
@@ -293,7 +277,7 @@ export default function HowItWorksPage() {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 gap-6">
-              
+
               {/* Your Device */}
               <div className="text-center">
                 <div className="bg-blue-100 p-6 rounded-lg mb-4">
@@ -337,16 +321,16 @@ export default function HowItWorksPage() {
               </div>
             </div>
 
-            <div className="mt-8 p-4 bg-red-50 rounded-lg border border-red-200">
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="flex items-start space-x-3">
-                <Database className="h-6 w-6 text-red-600 mt-0.5" />
+                <Database className="h-6 w-6 text-gray-600 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-red-900">What We DON'T Do</h4>
-                  <ul className="text-red-800 text-sm mt-2 space-y-1">
-                    <li>❌ Store your email content</li>
-                    <li>❌ Read your private messages</li>
-                    <li>❌ Share data with third parties</li>
-                    <li>❌ Mine your data for advertising</li>
+                  <h4 className="font-semibold text-gray-900">Data Protection</h4>
+                  <ul className="text-gray-700 text-sm mt-2 space-y-1">
+                    <li>• No email content storage</li>
+                    <li>• No private message access</li>
+                    <li>• No third-party data sharing</li>
+                    <li>• No advertising data mining</li>
                   </ul>
                 </div>
               </div>
@@ -356,7 +340,7 @@ export default function HowItWorksPage() {
 
         {/* Frequency & Performance */}
         <div className="grid md:grid-cols-2 gap-6 mb-12">
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -419,7 +403,7 @@ export default function HowItWorksPage() {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-8">
-              
+
               <div>
                 <h3 className="font-semibold text-lg mb-4 flex items-center">
                   <Shield className="h-5 w-5 text-green-600 mr-2" />
@@ -484,25 +468,25 @@ export default function HowItWorksPage() {
         </Card>
 
         {/* CTA */}
-        <Card className="text-center bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <Card className="text-center bg-gray-50 border-gray-200">
           <CardContent className="p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Ready to Experience Smart Email Management?
+              Get Started with MailSense
             </h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Join thousands of professionals who trust MailSense with their email intelligence
+              Professional email summarization for business users
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/">
                 <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                  <Shield className="mr-2 h-5 w-5" />
-                  Get Started Securely
+                  <Mail className="mr-2 h-5 w-5" />
+                  Connect Gmail Account
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link href="/privacy">
                 <Button variant="outline" size="lg" className="bg-white">
-                  Read Privacy Policy
+                  Privacy Policy
                 </Button>
               </Link>
             </div>

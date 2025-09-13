@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { onAuthStateChanged, type User } from "firebase/auth"
 import { auth } from "@/lib/firebase"
-import { signInWithGoogle, signOut, getStoredAccessToken, refreshGmailAccess, isTokenValid } from "@/lib/firebase-auth"
+import { signInWithGoogle, signOut, getValidAccessToken, refreshGmailAccess, isTokenValid } from "@/lib/firebase-auth"
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -49,21 +49,18 @@ export function useAuth() {
   }
 
   const getAccessToken = async () => {
-    const token = getStoredAccessToken()
-    if (!token) {
-      console.warn('[Auth] No access token found - user may need to re-authenticate')
+    try {
+      const token = await getValidAccessToken()
+      if (!token) {
+        console.warn('[Auth] No valid access token available - user needs to re-authenticate')
+        setError("Gmail access expired. Please sign out and sign in again to reconnect.")
+      }
+      return token
+    } catch (error: any) {
+      console.error('[Auth] Error getting access token:', error)
+      setError("Failed to get Gmail access. Please try signing in again.")
       return null
     }
-    
-    // Validate token before returning it
-    const isValid = await isTokenValid(token)
-    if (!isValid) {
-      console.warn('[Auth] Access token is invalid or expired')
-      localStorage.removeItem("gmail_access_token")
-      return null
-    }
-    
-    return token
   }
 
   const refreshAccess = async () => {

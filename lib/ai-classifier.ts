@@ -9,7 +9,20 @@ export interface ClassificationResult {
 }
 
 export class EmailClassifier {
-  private highPriorityKeywords = [
+  // Gmail's native label IDs for categories
+  private readonly GMAIL_LABELS = {
+    IMPORTANT: 'IMPORTANT',
+    CATEGORY_PROMOTIONS: 'CATEGORY_PROMOTIONS',
+    CATEGORY_SOCIAL: 'CATEGORY_SOCIAL',
+    CATEGORY_UPDATES: 'CATEGORY_UPDATES',
+    CATEGORY_FORUMS: 'CATEGORY_FORUMS',
+    CATEGORY_PRIMARY: 'CATEGORY_PRIMARY',
+    SPAM: 'SPAM',
+    TRASH: 'TRASH'
+  }
+
+  // Fallback keywords for medium priority (when not in Gmail's important but still significant)
+  private mediumPriorityKeywords = [
     "urgent",
     "asap",
     "emergency",
@@ -38,6 +51,16 @@ export class EmailClassifier {
     "confirm",
     "expire",
     "suspended",
+    "meeting",
+    "call",
+    "conference",
+    "client",
+    "customer",
+    "project",
+    "proposal",
+    "review",
+    "approval",
+    "decision"
   ]
 
   private lowPriorityKeywords = [
@@ -213,160 +236,184 @@ export class EmailClassifier {
   classifyEmail(email: EmailSummary): ClassificationResult {
     const content = `${email.subject} ${email.snippet}`.toLowerCase()
     const fromLower = email.from.toLowerCase()
-    let score = 0
+    const labels = email.labels || []
     const foundKeywords: string[] = []
     let reason = ""
-    let confidence = 0.5
+    let confidence = 0.9 // High confidence since we're using Gmail's native classification
 
-    for (const pattern of this.socialPatterns) {
-      if (content.includes(pattern)) {
-        score -= 4
-        foundKeywords.push(`social: ${pattern}`)
-        confidence += 0.1
-        reason = "Social network notification"
+    // PRIMARY CLASSIFICATION: Use Gmail's native importance and categories
+    
+    // HIGH PRIORITY: Gmail's Important marker (this is Gmail's AI-powered importance detection)
+    if (email.isImportant || labels.includes(this.GMAIL_LABELS.IMPORTANT)) {
+      foundKeywords.push("Gmail Important")
+      return {
+        priority: "high",
+        reason: "Gmail Important: Marked as important by Gmail's AI",
+        keywords: foundKeywords,
+        confidence: 0.95
       }
     }
 
+    // LOW PRIORITY: Promotions, Social, and Spam categories
+    if (labels.includes(this.GMAIL_LABELS.CATEGORY_PROMOTIONS)) {
+      foundKeywords.push("Gmail Promotions")
+      return {
+        priority: "low",
+        reason: "Promotions: Gmail categorized as promotional content",
+        keywords: foundKeywords,
+        confidence: 0.9
+      }
+    }
+
+    if (labels.includes(this.GMAIL_LABELS.CATEGORY_SOCIAL)) {
+      foundKeywords.push("Gmail Social")
+      return {
+        priority: "low",
+        reason: "Social: Gmail categorized as social network content",
+        keywords: foundKeywords,
+        confidence: 0.9
+      }
+    }
+
+    if (labels.includes(this.GMAIL_LABELS.SPAM) || labels.includes(this.GMAIL_LABELS.TRASH)) {
+      foundKeywords.push("Gmail Spam/Trash")
+      return {
+        priority: "low",
+        reason: "Spam: Gmail marked as spam or trash",
+        keywords: foundKeywords,
+        confidence: 0.95
+      }
+    }
+
+    // MEDIUM PRIORITY: Primary category emails that aren't marked important
+    // This includes most legitimate emails that aren't promotional/social
+    if (labels.includes(this.GMAIL_LABELS.CATEGORY_PRIMARY) || 
+        labels.includes(this.GMAIL_LABELS.CATEGORY_UPDATES) ||
+        labels.includes(this.GMAIL_LABELS.CATEGORY_FORUMS)) {
+      
+      // Check for medium-priority keywords to potentially elevate importance
+      let keywordScore = 0
+      for (const keyword of this.mediumPriorityKeywords) {
+        if (content.includes(keyword)) {
+          keywordScore += 1
+          foundKeywords.push(`keyword: ${keyword}`)
+        }
+      }
+
+      // If email has urgent keywords but isn't marked important by Gmail, 
+      // it's still medium priority (not high, since Gmail's AI didn't flag it)
+      if (keywordScore >= 2) {
+        foundKeywords.push("Gmail Primary + Keywords")
+        return {
+          priority: "medium",
+          reason: "Primary with Keywords: Important keywords detected in primary email",
+          keywords: foundKeywords,
+          confidence: 0.8
+        }
+      }
+
+      // Standard primary email
+      if (labels.includes(this.GMAIL_LABELS.CATEGORY_PRIMARY)) {
+        foundKeywords.push("Gmail Primary")
+        return {
+          priority: "medium",
+          reason: "Primary: Gmail categorized as primary inbox email",
+          keywords: foundKeywords,
+          confidence: 0.85
+        }
+      }
+
+      // Updates and Forums are typically medium priority
+      if (labels.includes(this.GMAIL_LABELS.CATEGORY_UPDATES)) {
+        foundKeywords.push("Gmail Updates")
+        return {
+          priority: "medium",
+          reason: "Updates: Gmail categorized as updates/notifications",
+          keywords: foundKeywords,
+          confidence: 0.8
+        }
+      }
+
+      if (labels.includes(this.GMAIL_LABELS.CATEGORY_FORUMS)) {
+        foundKeywords.push("Gmail Forums")
+        return {
+          priority: "medium",
+          reason: "Forums: Gmail categorized as forum/discussion content",
+          keywords: foundKeywords,
+          confidence: 0.75
+        }
+      }
+    }
+
+    // FALLBACK CLASSIFICATION: For emails without clear Gmail categories
+    // This handles cases where Gmail hasn't categorized the email
+    
+    let fallbackScore = 0
+    confidence = 0.6 // Lower confidence for fallback classification
+
+    // Check for urgent keywords
+    for (const keyword of this.mediumPriorityKeywords) {
+      if (content.includes(keyword)) {
+        fallbackScore += 1
+        foundKeywords.push(`fallback-keyword: ${keyword}`)
+      }
+    }
+
+    // Check for promotional patterns
     for (const pattern of this.promotionalPatterns) {
       if (content.includes(pattern)) {
-        score -= 3
+        fallbackScore -= 2
         foundKeywords.push(`promotional: ${pattern}`)
-        confidence += 0.1
-        reason = "Promotional content"
       }
     }
 
-    // Time-based urgency analysis (high priority)
-    for (const keyword of this.timeBasedUrgencyKeywords) {
-      if (content.includes(keyword)) {
-        score += 4
-        foundKeywords.push(`time-sensitive: ${keyword}`)
-        confidence += 0.1
+    // Check for social patterns
+    for (const pattern of this.socialPatterns) {
+      if (content.includes(pattern)) {
+        fallbackScore -= 2
+        foundKeywords.push(`social: ${pattern}`)
       }
     }
 
-    // High priority keywords (Gmail's important patterns)
-    for (const keyword of this.highPriorityKeywords) {
-      if (content.includes(keyword)) {
-        const weight = keyword === "urgent" || keyword === "emergency" || keyword === "interview" ? 5 : 3
-        score += weight
-        foundKeywords.push(keyword)
-        confidence += 0.05
-      }
-    }
-
-    // Business context analysis (medium to high priority)
-    let businessScore = 0
-    for (const keyword of this.businessKeywords) {
-      if (content.includes(keyword)) {
-        businessScore += 2
-        foundKeywords.push(`business: ${keyword}`)
-      }
-    }
-    score += Math.min(businessScore, 6)
-
-    // Personal context (usually medium priority unless urgent)
-    let personalScore = 0
-    for (const keyword of this.personalKeywords) {
-      if (content.includes(keyword)) {
-        personalScore += 1
-        foundKeywords.push(`personal: ${keyword}`)
-      }
-    }
-    score += Math.min(personalScore, 3)
-
-    // Domain-based scoring (Gmail-style)
+    // Domain-based scoring for uncategorized emails
     const emailDomain = fromLower.split("@")[1] || ""
     for (const [domain, weight] of this.domainImportanceMap) {
       if (emailDomain.includes(domain) || fromLower.includes(domain)) {
-        score += weight
+        fallbackScore += weight
         foundKeywords.push(`domain: ${domain}`)
-        confidence += weight > 0 ? 0.1 : -0.1
         break
       }
     }
 
-    // Low priority keywords (negative scoring)
-    for (const keyword of this.lowPriorityKeywords) {
-      if (content.includes(keyword)) {
-        score -= 3
-        foundKeywords.push(`low-priority: ${keyword}`)
-        confidence += 0.05
-      }
-    }
-
-    // Sender importance analysis
-    for (const sender of this.importantSenders) {
-      if (fromLower.includes(sender)) {
-        score += 3
-        foundKeywords.push(`important sender: ${sender}`)
-        confidence += 0.1
-      }
-    }
-
-    // Subject line analysis
-    if (email.subject.includes("RE:") || email.subject.includes("FW:")) {
-      score += 2
-      foundKeywords.push("ongoing conversation")
-    }
-
-    if (email.subject.toUpperCase() === email.subject && email.subject.length > 10) {
-      score += 3
-      foundKeywords.push("all caps subject")
-      confidence += 0.1
-    }
-
-    // Length analysis
-    const contentLength = content.length
-    if (contentLength < 50) {
-      score += 1
-      foundKeywords.push("brief message")
-    } else if (contentLength > 1000) {
-      score += 2
-      foundKeywords.push("detailed message")
-    }
-
-    // Time-based scoring
+    // Time-based urgency for uncategorized emails
     const hoursOld = (Date.now() - email.date.getTime()) / (1000 * 60 * 60)
     if (hoursOld < 1) {
-      score += 2
+      fallbackScore += 1
       foundKeywords.push("very recent")
-    } else if (hoursOld < 4) {
-      score += 1
-      foundKeywords.push("recent")
-    } else if (hoursOld > 72) {
-      score -= 1
     }
 
-    let priority: "high" | "medium" | "low"
-
-    if (score >= 8) {
-      priority = "high"
-      confidence = Math.min(0.95, 0.7 + (score - 8) * 0.05)
-      reason = "Gmail-style important: Multiple high-priority indicators"
-    } else if (score >= 4) {
-      priority = "high"
-      confidence = Math.min(0.85, 0.6 + (score - 4) * 0.05)
-      reason = "Gmail-style important: Contains urgent keywords or important sender"
-    } else if (score <= -4) {
-      priority = "low"
-      confidence = Math.min(0.9, 0.6 + Math.abs(score + 4) * 0.05)
-      reason = "Social/Promotional: LinkedIn invitations, promotions, or automated content"
-    } else if (score <= -1) {
-      priority = "low"
-      confidence = Math.min(0.8, 0.5 + Math.abs(score + 1) * 0.1)
-      reason = "Social/Promotional: Low priority indicators detected"
+    // Determine priority based on fallback scoring
+    if (fallbackScore >= 3) {
+      return {
+        priority: "medium",
+        reason: "Fallback Medium: Multiple importance indicators detected",
+        keywords: foundKeywords,
+        confidence: 0.7
+      }
+    } else if (fallbackScore <= -2) {
+      return {
+        priority: "low",
+        reason: "Fallback Low: Promotional or social patterns detected",
+        keywords: foundKeywords,
+        confidence: 0.75
+      }
     } else {
-      priority = "medium"
-      confidence = Math.max(0.4, Math.min(0.7, 0.5 + Math.abs(score) * 0.05))
-      reason = "Primary: Standard email in primary inbox but not marked important"
-    }
-
-    return {
-      priority,
-      reason,
-      keywords: foundKeywords,
-      confidence: Math.max(0.1, Math.min(0.99, confidence)),
+      return {
+        priority: "medium",
+        reason: "Fallback Medium: Standard email without clear categorization",
+        keywords: foundKeywords,
+        confidence: 0.6
+      }
     }
   }
 

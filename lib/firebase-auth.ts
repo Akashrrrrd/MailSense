@@ -25,6 +25,7 @@ googleProvider.addScope("profile")
 googleProvider.setCustomParameters({
   prompt: "consent", // Changed from "select_account" to "consent" to force fresh permissions
   access_type: "offline", // Request refresh token
+  include_granted_scopes: "true", // Include previously granted scopes
 })
 
 export interface AuthUser extends User {
@@ -49,8 +50,17 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
     const user = result.user as AuthUser
     if (accessToken) {
       user.accessToken = accessToken
-      // Store access token in localStorage for API calls
+      
+      // Store access token and expiry time in localStorage
       localStorage.setItem("gmail_access_token", accessToken)
+      
+      // OAuth tokens typically expire in 1 hour, but we'll be conservative and use 45 minutes
+      const expiryTime = Date.now() + (45 * 60 * 1000) // 45 minutes from now
+      localStorage.setItem("gmail_token_expiry", expiryTime.toString())
+      
+      // Note: Browser-based OAuth doesn't provide refresh tokens
+      // This is a limitation of the current OAuth flow
+      console.log('[Auth] Access token stored (refresh tokens not available in browser OAuth)')
       
       // Validate the token immediately
       const isValid = await isTokenValid(accessToken)
@@ -87,8 +97,10 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
 export const signOut = async (): Promise<void> => {
   try {
     await firebaseSignOut(auth)
-    // Clear stored access token
+    // Clear all stored tokens
     localStorage.removeItem("gmail_access_token")
+    localStorage.removeItem("gmail_refresh_token")
+    localStorage.removeItem("gmail_token_expiry")
     console.log("Successfully signed out")
   } catch (error) {
     console.error("Error signing out:", error)
@@ -108,6 +120,21 @@ export const getCurrentUser = (): Promise<User | null> => {
 export const getStoredAccessToken = (): string | null => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("gmail_access_token")
+  }
+  return null
+}
+
+export const getStoredRefreshToken = (): string | null => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("gmail_refresh_token")
+  }
+  return null
+}
+
+export const getTokenExpiry = (): number | null => {
+  if (typeof window !== "undefined") {
+    const expiry = localStorage.getItem("gmail_token_expiry")
+    return expiry ? parseInt(expiry) : null
   }
   return null
 }
@@ -143,12 +170,100 @@ export const isTokenValid = async (token: string): Promise<boolean> => {
   }
 }
 
+export const isTokenExpired = (): boolean => {
+  const expiry = getTokenExpiry()
+  if (!expiry) return true
+  
+  // Consider token expired if it expires within the next 5 minutes
+  const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000)
+  return expiry <= fiveMinutesFromNow
+}
+
+export const refreshAccessToken = async (): Promise<string | null> => {
+  try {
+    console.log('[Auth] Attempting to refresh access token...')
+    
+    // For Google OAuth, we need to use Firebase's built-in token refresh
+    // Get the current user and force token refresh
+    const currentUser = auth.currentUser
+    if (!currentUser) {
+      console.error('[Auth] No current user for token refresh')
+      return null
+    }
+    
+    // Force refresh the Firebase ID token, which should also refresh OAuth tokens
+    const idTokenResult = await currentUser.getIdTokenResult(true)
+    console.log('[Auth] Firebase token refreshed successfully')
+    
+    // For Gmail API, we need to re-authenticate to get a fresh access token
+    // This is a limitation of the current OAuth flow - we'll need to re-sign in
+    console.log('[Auth] Gmail access token refresh requires re-authentication')
+    return null
+    
+  } catch (error) {
+    console.error('[Auth] Token refresh failed:', error)
+    return null
+  }
+}
+
+// Get a valid access token, refreshing if necessary
+export const getValidAccessToken = async (): Promise<string | null> => {
+  const currentToken = getStoredAccessToken()
+  
+  // If no token exists, user needs to sign in
+  if (!currentToken) {
+    console.log('[Auth] No access token found')
+    return null
+  }
+  
+  // Check if token is expired
+  if (isTokenExpired()) {
+    console.log('[Auth] Access token is expired')
+    
+    // Clear expired tokens
+    localStorage.removeItem("gmail_access_token")
+    localStorage.removeItem("gmail_refresh_token")
+    localStorage.removeItem("gmail_token_expiry")
+    
+    console.log('[Auth] Token expired - user needs to re-authenticate')
+    return null
+  }
+  
+  // For non-expired tokens, do a quick validation
+  // Skip validation if token was validated recently (within 5 minutes)
+  const lastValidation = localStorage.getItem("gmail_token_last_validation")
+  const fiveMinutesAgo = Date.now() - (5 * 60 * 1000)
+  
+  if (lastValidation && parseInt(lastValidation) > fiveMinutesAgo) {
+    // Token was validated recently, assume it's still valid
+    return currentToken
+  }
+  
+  // Validate token
+  const isValid = await isTokenValid(currentToken)
+  if (!isValid) {
+    console.log('[Auth] Token validation failed - clearing invalid token')
+    localStorage.removeItem("gmail_access_token")
+    localStorage.removeItem("gmail_refresh_token")
+    localStorage.removeItem("gmail_token_expiry")
+    localStorage.removeItem("gmail_token_last_validation")
+    return null
+  }
+  
+  // Store validation timestamp
+  localStorage.setItem("gmail_token_last_validation", Date.now().toString())
+  
+  return currentToken
+}
+
 // Force a fresh sign-in to get new tokens
 export const refreshGmailAccess = async (): Promise<AuthUser> => {
   console.log('[Auth] Refreshing Gmail access - forcing new sign-in...')
   
   // Clear all existing tokens
   localStorage.removeItem("gmail_access_token")
+  localStorage.removeItem("gmail_refresh_token")
+  localStorage.removeItem("gmail_token_expiry")
   
   // Sign out first to clear Firebase auth state
   try {

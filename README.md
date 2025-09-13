@@ -12,12 +12,13 @@ MailSense is a sophisticated email management platform that uses advanced AI to 
 - **Smart Filtering**: Automatically filters out social media, promotions, and low-priority emails
 - **Real-time Analysis**: Processes emails as they arrive in your Gmail
 
-### 📱 WhatsApp Notifications (Powered by Vonage)
+### 📱 WhatsApp Notifications (Powered by Twilio)
 - **High-Priority Only**: Receive WhatsApp alerts only for truly important emails
 - **AI-Generated Summaries**: Smart 2-line summaries created by AI
 - **Professional Format**: Clean, informative message format
 - **Instant Delivery**: Get notified the moment important emails arrive
-- **Reliable Service**: Powered by Vonage's enterprise-grade messaging platform
+- **SMS Fallback**: Automatic SMS backup when WhatsApp fails
+- **Reliable Service**: Powered by Twilio's enterprise-grade messaging platform
 
 ### 🔐 Secure Gmail Integration
 - **Direct Gmail API**: Secure integration with Gmail using Google OAuth
@@ -78,16 +79,17 @@ Check Gmail or MailSense dashboard for full details
 - **Authentication**: Firebase Auth with Google OAuth
 - **Email API**: Gmail API with proper error handling
 - **AI**: Perplexity API for email summarization
-- **Notifications**: Vonage Messages API for WhatsApp
+- **Notifications**: Twilio API for WhatsApp and SMS
 - **Storage**: Local storage for email caching
 
 ## 🔧 Environment Variables
 
 ```bash
-# Vonage WhatsApp (Required for notifications)
-VONAGE_API_KEY=your_vonage_api_key
-VONAGE_API_SECRET=your_vonage_api_secret
-VONAGE_WHATSAPP_NUMBER=your_vonage_whatsapp_number
+# Twilio WhatsApp (Required for notifications)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
+TWILIO_PHONE_NUMBER=+1234567890
 
 # AI Summarization (Required for smart summaries)
 PERPLEXITY_API_KEY=your_perplexity_api_key

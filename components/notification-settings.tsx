@@ -90,19 +90,19 @@ export function NotificationSettings() {
 
       if (error.message?.includes("Daily message limit reached") || error.message?.includes("TRIAL_LIMIT_EXCEEDED")) {
         setWhatsappError(
-          "🚨 Vonage trial limit reached (9 messages/day). Upgrade to paid account for unlimited messages or wait until tomorrow."
+          "🚨 Twilio trial limit reached. Upgrade to paid account for unlimited messages or wait until tomorrow."
         )
       } else if (error.message?.includes("Rate limit exceeded")) {
         setWhatsappError(
           "⏰ Rate limit exceeded. Please wait a few minutes before sending another test message."
         )
-      } else if (error.message?.includes("Vonage credentials not configured")) {
+      } else if (error.message?.includes("Twilio configuration missing")) {
         setWhatsappError(
-          "Vonage credentials not configured. Please add VONAGE_API_KEY, VONAGE_API_SECRET, and VONAGE_WHATSAPP_NUMBER to your environment variables."
+          "Twilio credentials not configured. Please add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_NUMBER to your environment variables."
         )
       } else if (error.message?.includes("Failed to send WhatsApp notification")) {
         setWhatsappError(
-          "Failed to send WhatsApp message. Please check your Vonage configuration and phone number format."
+          "Failed to send WhatsApp message. Please check your Twilio configuration and phone number format."
         )
       } else if (error.message?.includes("No emails found")) {
         setWhatsappError(
@@ -129,7 +129,7 @@ export function NotificationSettings() {
       case "granted":
         return (
           <Badge variant="default" className="bg-green-600 px-3 py-1">
-            <Shield className="h-3 w-3 mr-1" />
+            <Shield className="h-3 w-2 mr-1" />
             Granted
           </Badge>
         )
@@ -175,12 +175,12 @@ export function NotificationSettings() {
     setWhatsappError("")
 
     try {
-      const response = await fetch('/api/send-vonage-whatsapp', {
+      const response = await fetch('/api/send-twilio-whatsapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: preferences.whatsappNumber,
-          message: 'This is a test message from MailSense. Your WhatsApp notifications via Vonage are working correctly! 🎉'
+          message: 'This is a test message from MailSense. Your WhatsApp notifications via Twilio are working correctly! 🎉'
         })
       })
 
@@ -193,7 +193,7 @@ export function NotificationSettings() {
       setWhatsappTestStatus("success")
       setTimeout(() => setWhatsappTestStatus("idle"), 3000)
     } catch (error) {
-      console.error('Error sending WhatsApp test via Vonage:', error)
+      console.error('Error sending WhatsApp test via Twilio:', error)
       setWhatsappError(error instanceof Error ? error.message : 'Failed to send test message')
       setWhatsappTestStatus("error")
       setTimeout(() => {
@@ -300,7 +300,10 @@ export function NotificationSettings() {
                     <p className="text-sm font-medium truncate">{email.subject}</p>
                     <p className="text-xs text-gray-500 truncate">{email.from}</p>
                   </div>
-                  <Badge variant={email.priority === "high" ? "default" : "secondary"} className="ml-2">
+                  <Badge 
+                    variant={email.priority === "high" ? "destructive" : "secondary"} 
+                    className={`ml-2 ${email.priority === "high" ? "bg-red-600 text-white" : ""}`}
+                  >
                     {email.priority}
                   </Badge>
                 </div>
@@ -331,22 +334,22 @@ export function NotificationSettings() {
             </Badge>
           </CardTitle>
           <CardDescription className="text-xs sm:text-sm">
-            Get instant WhatsApp alerts for high-priority emails only. AI creates smart summaries so you know what's important without opening Gmail.
+            Receive intelligent email summaries via WhatsApp for priority communications.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0 space-y-4 sm:space-y-6">
           {/* Main Setup Section */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-            <h4 className="font-semibold text-green-900 mb-3 text-sm sm:text-base flex items-center">
+            <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base flex items-center">
               <MessageCircle className="h-4 w-4 mr-2" />
-              Setup WhatsApp Alerts
+              WhatsApp Configuration
             </h4>
             
             {/* Step 1: Phone Number */}
             <div className="space-y-3 mb-4">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="whatsapp-number">WhatsApp Number (Vonage)</Label>
+                  <Label htmlFor="whatsapp-number">WhatsApp Number (Twilio)</Label>
                   <Input
                     id="whatsapp-number"
                     type="tel"
@@ -356,45 +359,77 @@ export function NotificationSettings() {
                     className="mt-1"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Include country code (e.g., +1 for US, +44 for UK). Powered by Vonage.
+                    Include country code (e.g., +1 for US, +44 for UK)
                   </p>
                 </div>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleTestWhatsApp}
-                  disabled={whatsappTestStatus === "sending" || !preferences.whatsappNumber}
-                  className="w-full"
-                >
-                  {whatsappTestStatus === "sending" ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Sending Test...
-                    </>
-                  ) : whatsappTestStatus === "success" ? (
-                    <>
-                      <MessageCircle className="mr-2 h-4 w-4 text-green-500" />
-                      Test Sent via Vonage!
-                    </>
-                  ) : whatsappTestStatus === "error" ? (
-                    <>
-                      <MessageCircle className="mr-2 h-4 w-4 text-red-500" />
-                      Failed to Send
-                    </>
-                  ) : (
-                    <>
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                      Send Test via Vonage
-                    </>
-                  )}
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTestWhatsApp}
+                    disabled={whatsappTestStatus === "sending" || !preferences.whatsappNumber}
+                    className="w-full"
+                  >
+                    {whatsappTestStatus === "sending" ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Sending Test...
+                      </>
+                    ) : whatsappTestStatus === "success" ? (
+                      <>
+                        <MessageCircle className="mr-2 h-4 w-4 text-green-500" />
+                        Test Sent via Twilio!
+                      </>
+                    ) : whatsappTestStatus === "error" ? (
+                      <>
+                        <MessageCircle className="mr-2 h-4 w-4 text-red-500" />
+                        Failed to Send
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Test WhatsApp
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/send-twilio-sms', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            to: preferences.whatsappNumber,
+                            message: 'MailSense SMS Test: Your email notifications are working! Use SMS while applying for WhatsApp Business.'
+                          })
+                        });
+                        const result = await response.json();
+                        if (response.ok) {
+                          alert('SMS sent successfully! Check your phone.');
+                        } else {
+                          alert('SMS failed: ' + result.error);
+                        }
+                      } catch (error) {
+                        alert('SMS error: ' + error.message);
+                      }
+                    }}
+                    disabled={!preferences.whatsappNumber}
+                    className="w-full"
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Test SMS (Works Immediately)
+                  </Button>
+                </div>
                 {whatsappTestStatus === "error" && whatsappError && (
                   <p className="text-sm text-red-500">
                     {whatsappError}
                     {whatsappError.includes('credentials') && (
                       <span className="block mt-1">
-                        Please check your Vonage API credentials in the environment variables.
+                        Please check your Twilio API credentials in the environment variables.
                       </span>
                     )}
                   </p>
@@ -406,10 +441,10 @@ export function NotificationSettings() {
             <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200">
               <div className="flex-1">
                 <Label htmlFor="whatsapp-enabled" className="text-sm font-medium cursor-pointer">
-                  Step 2: Enable WhatsApp Notifications
+                  Enable WhatsApp Notifications
                 </Label>
                 <p className="text-xs text-gray-600 mt-1">
-                  Only high-priority emails will trigger WhatsApp messages
+                  Activate notifications for priority emails
                 </p>
               </div>
               <Switch
@@ -431,19 +466,19 @@ export function NotificationSettings() {
                   }`}></div>
                   <span className="text-xs font-medium">
                     {preferences.whatsappEnabled && preferences.whatsappNumber 
-                      ? '✅ WhatsApp notifications are ACTIVE' 
-                      : '⏸️ WhatsApp notifications are DISABLED'}
+                      ? 'WhatsApp notifications active' 
+                      : 'WhatsApp notifications disabled'}
                   </span>
                 </div>
                 {preferences.whatsappEnabled && preferences.whatsappNumber && (
                   <span className="text-xs text-green-600 font-mono">
-                    📱 {preferences.whatsappNumber}
+                    {preferences.whatsappNumber}
                   </span>
                 )}
               </div>
               {preferences.whatsappEnabled && preferences.whatsappNumber && (
                 <div className="mt-2 text-xs text-green-700">
-                  🔄 Checking for new emails every minute • 🎯 High-priority emails only
+                  Monitoring active • Priority emails only
                 </div>
               )}
             </div>
@@ -569,18 +604,36 @@ export function NotificationSettings() {
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <h4 className="font-medium text-red-900 mb-2 text-sm flex items-center">
                 <MessageCircle className="h-4 w-4 mr-1" />
-                ❌ WhatsApp Test Failed
+                WhatsApp Setup Required
               </h4>
               <p className="text-xs sm:text-sm text-red-800 mb-3">{whatsappError}</p>
-              <div className="text-xs text-red-700">
-                <strong>Common solutions:</strong>
-                <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>Check your phone number format (+1234567890)</li>
-                  <li>Ensure Twilio credentials are configured</li>
-                  <li>Verify your WhatsApp number is registered</li>
-                  <li>Try refreshing and testing again</li>
-                </ul>
-              </div>
+              
+              {whatsappError.includes('WhatsApp Business Account Required') ? (
+                <div className="text-xs text-red-700">
+                  <strong>WhatsApp Business Account Setup:</strong>
+                  <ol className="list-decimal list-inside mt-1 space-y-1">
+                    <li>Go to Twilio Console → Messaging → WhatsApp</li>
+                    <li>Apply for WhatsApp Business Account</li>
+                    <li>Submit business verification documents</li>
+                    <li>Wait 1-7 days for approval</li>
+                    <li>Update TWILIO_WHATSAPP_NUMBER with verified number</li>
+                  </ol>
+                  <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                    <strong className="text-blue-800">Temporary Solution:</strong>
+                    <p className="text-blue-700">Use SMS notifications while waiting for WhatsApp approval. SMS works immediately!</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-red-700">
+                  <strong>Common solutions:</strong>
+                  <ul className="list-disc list-inside mt-1 space-y-1">
+                    <li>Check your phone number format (+1234567890)</li>
+                    <li>Ensure Twilio credentials are configured</li>
+                    <li>Verify your WhatsApp number is registered</li>
+                    <li>Try refreshing and testing again</li>
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

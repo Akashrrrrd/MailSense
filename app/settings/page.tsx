@@ -14,7 +14,7 @@ export default function SettingsPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-gray-50">
         <div className="w-full max-w-[100vw] overflow-x-hidden px-2 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
           {/* Header */}
           <div className="flex flex-col space-y-4 sm:space-y-0 mb-6 sm:mb-8">
@@ -109,8 +109,8 @@ export default function SettingsPage() {
                     <p className="text-gray-600">10:00 PM - 8:00 AM</p>
                   </div>
                   <div className="text-xs sm:text-sm">
-                    <p className="font-medium mb-1">AI Classification:</p>
-                    <p className="text-gray-600">94% accuracy rate</p>
+                    <p className="font-medium mb-1">Processing Status:</p>
+                    <p className="text-gray-600">Active and monitoring</p>
                   </div>
                 </CardContent>
               </Card>
