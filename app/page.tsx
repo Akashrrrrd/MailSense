@@ -19,9 +19,16 @@ export default function HomePage() {
           <div className="max-w-5xl mx-auto text-center">
             {/* Hero Section */}
             <div className="mb-12 lg:mb-16">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 lg:mb-8">
-                Mail<span className="text-blue-600">Sense</span>
-              </h1>
+              <div className="flex items-center justify-center mb-6 lg:mb-8">
+                <img 
+                  src="/logo.png" 
+                  alt="MailSense Logo" 
+                  className="h-20 w-20 sm:h-28 sm:w-28 lg:h-32 lg:w-32 mr-6"
+                />
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900">
+                  MailSense
+                </h1>
+              </div>
               <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-8 lg:mb-10 max-w-3xl mx-auto leading-relaxed">
                 Professional email summarization with AI-powered insights delivered directly to WhatsApp.
               </p>

@@ -48,9 +48,11 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 lg:mb-10 space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="MailSense Logo" 
+                className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0"
+              />
               <div className="min-w-0 flex-1">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
                   MailSense Dashboard

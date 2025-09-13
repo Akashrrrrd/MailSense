@@ -92,8 +92,14 @@ export function useGmail(): UseGmailReturn {
 
     const accessToken = await getAccessToken()
     if (!accessToken) {
-      setError("Gmail access expired. Please sign out and sign in again to reconnect.")
-      setConnectionStatus('failed')
+      // Only show error if this is not the first load
+      if (lastFetchTime > 0) {
+        setError("Gmail access expired. Please sign out and sign in again to reconnect.")
+        setConnectionStatus('failed')
+      } else {
+        console.log('[useGmail] No access token on first load - user needs to sign in')
+        setConnectionStatus('idle')
+      }
       
       // Clear cached emails when token is invalid
       localStorage.removeItem('mailsense-emails')

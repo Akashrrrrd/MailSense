@@ -32,8 +32,17 @@ export interface AuthUser extends User {
   accessToken?: string
 }
 
+// Track if a sign-in is already in progress
+let signInInProgress = false
+
 export const signInWithGoogle = async (): Promise<AuthUser> => {
   try {
+    // Prevent multiple simultaneous sign-in attempts
+    if (signInInProgress) {
+      throw new Error("Sign-in already in progress. Please wait.")
+    }
+    
+    signInInProgress = true
     console.log('[Auth] Starting Google sign-in with Gmail permissions...')
     
     // Clear any existing tokens first
@@ -86,11 +95,16 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       throw new Error("Sign-in was cancelled. Please try again.")
     } else if (error.code === "auth/popup-blocked") {
       throw new Error("Pop-up was blocked. Please allow pop-ups and try again.")
+    } else if (error.code === "auth/cancelled-popup-request") {
+      throw new Error("Sign-in was interrupted. Please try again.")
     } else if (error.message?.includes("invalid access token")) {
       throw new Error("Failed to get Gmail permissions. Please try again and ensure you grant all requested permissions.")
     } else {
       throw new Error("Failed to sign in. Please try again.")
     }
+  } finally {
+    // Always reset the sign-in progress flag
+    signInInProgress = false
   }
 }
 

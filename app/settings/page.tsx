@@ -44,8 +44,12 @@ export default function SettingsPage() {
               {/* Page Title */}
               <div className="space-y-2">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
-                  <Settings className="h-7 w-7 sm:h-8 sm:w-8 mr-3 text-blue-600 flex-shrink-0" />
-                  Settings
+                  <img 
+                    src="/logo.png" 
+                    alt="MailSense Logo" 
+                    className="h-7 w-7 sm:h-8 sm:w-8 mr-3 flex-shrink-0"
+                  />
+                  MailSense Settings
                 </h1>
                 <p className="text-base text-gray-600 max-w-2xl">
                   Manage your MailSense preferences and notifications

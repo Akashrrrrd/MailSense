@@ -65,7 +65,8 @@ export function GmailConnectionStatus({ connectionStatus, onReconnect }: GmailCo
 
   // Show connection status based on both connection and token status
   const getStatusInfo = () => {
-    if (connectionStatus === 'failed' || tokenStatus === 'expired' || tokenStatus === 'missing') {
+    // Only show error if there's a real connection failure, not just missing token on first load
+    if (connectionStatus === 'failed' || (tokenStatus === 'expired' && connectionStatus !== 'idle')) {
       return {
         variant: 'destructive' as const,
         icon: <WifiOff className="h-4 w-4" />,

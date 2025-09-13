@@ -33,7 +33,14 @@ export function useAuth() {
       setLoading(true)
       await signInWithGoogle()
     } catch (error: any) {
-      setError(error.message)
+      console.error('[Auth] Login error:', error)
+      
+      // Don't show error for user-cancelled actions
+      if (error.message?.includes("cancelled") || error.message?.includes("interrupted")) {
+        console.log('[Auth] User cancelled sign-in')
+      } else {
+        setError(error.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -53,12 +60,17 @@ export function useAuth() {
       const token = await getValidAccessToken()
       if (!token) {
         console.warn('[Auth] No valid access token available - user needs to re-authenticate')
-        setError("Gmail access expired. Please sign out and sign in again to reconnect.")
+        // Only set error if user is actually authenticated but token is invalid
+        if (user) {
+          setError("Gmail access expired. Please sign out and sign in again to reconnect.")
+        }
       }
       return token
     } catch (error: any) {
       console.error('[Auth] Error getting access token:', error)
-      setError("Failed to get Gmail access. Please try signing in again.")
+      if (user) {
+        setError("Failed to get Gmail access. Please try signing in again.")
+      }
       return null
     }
   }
