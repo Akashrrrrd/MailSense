@@ -48,22 +48,24 @@ export function SecurityFAQ() {
           Security & Privacy FAQ
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2 sm:space-y-3">
         {faqs.map((faq, index) => (
-          <div key={index} className="border border-gray-200 rounded-lg">
+          <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
             <Button
               variant="ghost"
-              className="w-full p-4 justify-between text-left h-auto"
+              className="w-full p-3 sm:p-4 justify-between text-left h-auto"
               onClick={() => toggleFAQ(index)}
             >
-              <div className="flex items-center space-x-3">
-                <faq.icon className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                <span className="font-medium text-sm">{faq.question}</span>
+              <div className="flex items-start space-x-2 sm:space-x-3 min-w-0 flex-1">
+                <faq.icon className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                <span className="font-medium text-xs sm:text-sm text-left leading-tight">
+                  {faq.question}
+                </span>
               </div>
               {openIndex === index ? (
-                <ChevronUp className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                <ChevronUp className="h-4 w-4 text-gray-500 flex-shrink-0 ml-2" />
               ) : (
-                <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0 ml-2" />
               )}
             </Button>
             
