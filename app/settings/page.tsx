@@ -1,9 +1,11 @@
 "use client"
 
 import { useAuth } from "@/hooks/use-auth"
+import { useAIAssistant } from "@/hooks/use-ai-assistant"
 import { AuthGuard } from "@/components/auth-guard"
 import { NotificationSettings } from "@/components/notification-settings"
 import { Navigation } from "@/components/navigation"
+import { AIAssistant } from "@/components/ai-assistant"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Settings, User, Bell } from "lucide-react"
@@ -11,6 +13,7 @@ import Link from "next/link"
 
 export default function SettingsPage() {
   const { user, logout } = useAuth()
+  const { emails, showAIAssistant, toggleAIAssistant, isAvailable } = useAIAssistant()
 
   return (
     <AuthGuard requireAuth={true}>
@@ -135,6 +138,15 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* AI Assistant */}
+        {isAvailable && (
+          <AIAssistant 
+            emails={emails}
+            isVisible={showAIAssistant}
+            onToggle={toggleAIAssistant}
+          />
+        )}
       </div>
     </AuthGuard>
   )

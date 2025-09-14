@@ -47,12 +47,21 @@ export function GmailConnectionStatus({ connectionStatus, onReconnect }: GmailCo
   const handleReconnect = async () => {
     setIsReconnecting(true)
     try {
+      console.log('[GmailConnection] Starting reconnection process...')
       await refreshAccess()
+      
+      // Wait a moment for the new token to be available
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       if (onReconnect) {
         onReconnect()
       }
+      
+      console.log('[GmailConnection] Reconnection completed successfully')
     } catch (error) {
-      console.error('Reconnection failed:', error)
+      console.error('[GmailConnection] Reconnection failed:', error)
+      // If refresh fails, suggest manual sign out/in
+      alert('Reconnection failed. Please sign out and sign back in to restore Gmail access.')
     } finally {
       setIsReconnecting(false)
     }
@@ -71,7 +80,7 @@ export function GmailConnectionStatus({ connectionStatus, onReconnect }: GmailCo
         variant: 'destructive' as const,
         icon: <WifiOff className="h-4 w-4" />,
         title: 'Gmail Connection Issue',
-        message: 'Please sign out and sign in again to reconnect your Gmail account.',
+        message: 'Your Gmail access has expired. Click "Reconnect" below or sign out and sign back in.',
         showReconnect: true
       }
     }

@@ -9,6 +9,8 @@ import { EmailStats } from "@/components/email-stats"
 import { EmailSearch } from "@/components/email-search"
 import { Navigation } from "@/components/navigation"
 import { GmailConnectionStatus } from "@/components/gmail-connection-status"
+import { AIAssistant } from "@/components/ai-assistant"
+import { AIAssistantDemo } from "@/components/ai-assistant-demo"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +35,7 @@ export default function DashboardPage() {
 
   const [filteredEmails, setFilteredEmails] = useState<EmailSummary[]>([])
   const [showFiltered, setShowFiltered] = useState(false)
+  const [showAIAssistant, setShowAIAssistant] = useState(false)
 
   const handleFilteredEmails = (filtered: EmailSummary[]) => {
     setFilteredEmails(filtered)
@@ -227,6 +230,9 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
+              {/* AI Assistant Demo */}
+              <AIAssistantDemo />
+
               {/* Quick Stats */}
               <Card>
                 <CardHeader className="pb-3 sm:pb-4">
@@ -262,6 +268,13 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* AI Assistant */}
+        <AIAssistant 
+          emails={emails}
+          isVisible={showAIAssistant}
+          onToggle={() => setShowAIAssistant(!showAIAssistant)}
+        />
       </div>
     </AuthGuard>
   )

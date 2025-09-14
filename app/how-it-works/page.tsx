@@ -32,42 +32,50 @@ export default function HowItWorksPage() {
               ← Back to Home
             </Button>
           </Link>
-          <div className="flex items-center justify-center mb-6">
-            <img 
-              src="/logo.png" 
-              alt="MailSense Logo" 
-              className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 mr-6"
-            />
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900">
+          
+          {/* Mobile-first responsive header */}
+          <div className="mb-6">
+            {/* Logo - centered on all screens */}
+            <div className="flex justify-center mb-4">
+              <img 
+                src="/logo.png" 
+                alt="MailSense Logo" 
+                className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24"
+              />
+            </div>
+            
+            {/* Title - stacked below logo on mobile, responsive sizing */}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
               How MailSense Works
             </h1>
           </div>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
             Professional email summarization delivered to WhatsApp in four simple steps
           </p>
         </div>
 
         {/* Security Promise */}
         <Card className="mb-12 border-gray-200 bg-gray-50">
-          <CardContent className="p-6 text-center">
+          <CardContent className="p-4 sm:p-6 text-center">
             <div className="flex justify-center mb-4">
-              <Shield className="h-12 w-12 text-blue-600" />
+              <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Security & Privacy</h2>
-            <p className="text-gray-700 text-lg mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Security & Privacy</h2>
+            <p className="text-gray-700 text-base sm:text-lg mb-4 px-2">
               Enterprise-grade security with real-time processing and zero data storage
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Badge className="bg-gray-100 text-gray-800 px-3 py-1">
-                <Lock className="h-4 w-4 mr-1" />
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-4">
+              <Badge className="bg-gray-100 text-gray-800 px-2 sm:px-3 py-1 text-xs sm:text-sm">
+                <Lock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Zero Storage
               </Badge>
-              <Badge className="bg-gray-100 text-gray-800 px-3 py-1">
-                <Eye className="h-4 w-4 mr-1" />
+              <Badge className="bg-gray-100 text-gray-800 px-2 sm:px-3 py-1 text-xs sm:text-sm">
+                <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Read-Only
               </Badge>
-              <Badge className="bg-gray-100 text-gray-800 px-3 py-1">
-                <Database className="h-4 w-4 mr-1" />
+              <Badge className="bg-gray-100 text-gray-800 px-2 sm:px-3 py-1 text-xs sm:text-sm">
+                <Database className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Auto-Cleanup
               </Badge>
             </div>
@@ -76,7 +84,7 @@ export default function HowItWorksPage() {
 
         {/* Step-by-Step Process */}
         <div className="mb-12">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 mb-6 sm:mb-8 px-4">
             How It Works
           </h2>
 
@@ -84,41 +92,41 @@ export default function HowItWorksPage() {
 
             {/* Step 1: Authentication */}
             <Card className="border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center text-xl">
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4 text-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-lg sm:text-xl">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-3 sm:mr-4 text-sm">
                     1
                   </div>
-                  <Shield className="h-6 w-6 text-blue-600 mr-3" />
-                  Secure Authentication
+                  <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3" />
+                  <span className="leading-tight">Secure Authentication</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
+              <CardContent className="pt-0">
+                <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <h4 className="font-semibold mb-2">What Happens:</h4>
-                    <ul className="space-y-2 text-gray-600">
+                    <h4 className="font-semibold mb-3 text-sm sm:text-base">What Happens:</h4>
+                    <ul className="space-y-2 sm:space-y-3 text-gray-600 text-sm sm:text-base">
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        You click "Sign in with Google"
+                        <span>You click "Sign in with Google"</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Google OAuth handles authentication
+                        <span>Google OAuth handles authentication</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        You grant read-only Gmail permissions
+                        <span>You grant read-only Gmail permissions</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Secure access token is created
+                        <span>Secure access token is created</span>
                       </li>
                     </ul>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-gray-800">Security Features:</h4>
-                    <ul className="space-y-1 text-sm text-gray-700">
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mt-4 md:mt-0">
+                    <h4 className="font-semibold mb-2 text-gray-800 text-sm sm:text-base">Security Features:</h4>
+                    <ul className="space-y-1 text-xs sm:text-sm text-gray-700">
                       <li>• Enterprise OAuth 2.0</li>
                       <li>• Read-only permissions</li>
                       <li>• No credential storage</li>
@@ -131,41 +139,41 @@ export default function HowItWorksPage() {
 
             {/* Step 2: Email Fetching */}
             <Card className="border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center text-xl">
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4 text-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-lg sm:text-xl">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-3 sm:mr-4 text-sm">
                     2
                   </div>
-                  <Mail className="h-6 w-6 text-blue-600 mr-3" />
-                  Smart Email Fetching
+                  <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3" />
+                  <span className="leading-tight">Smart Email Fetching</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
+              <CardContent className="pt-0">
+                <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <h4 className="font-semibold mb-2">What Happens:</h4>
-                    <ul className="space-y-2 text-gray-600">
+                    <h4 className="font-semibold mb-3 text-sm sm:text-base">What Happens:</h4>
+                    <ul className="space-y-2 sm:space-y-3 text-gray-600 text-sm sm:text-base">
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Connects to Gmail API securely
+                        <span>Connects to Gmail API securely</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Fetches unread emails only
+                        <span>Fetches unread emails only</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Processes 50 most recent emails
+                        <span>Processes 50 most recent emails</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Extracts metadata (sender, subject, date)
+                        <span>Extracts metadata (sender, subject, date)</span>
                       </li>
                     </ul>
                   </div>
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-blue-800">Privacy Protection:</h4>
-                    <ul className="space-y-1 text-sm text-gray-700">
+                  <div className="bg-blue-50 p-3 sm:p-4 rounded-lg mt-4 md:mt-0">
+                    <h4 className="font-semibold mb-2 text-blue-800 text-sm sm:text-base">Privacy Protection:</h4>
+                    <ul className="space-y-1 text-xs sm:text-sm text-gray-700">
                       <li>• Email content processed in real-time</li>
                       <li>• No full email storage</li>
                       <li>• Only metadata cached temporarily</li>
@@ -178,41 +186,41 @@ export default function HowItWorksPage() {
 
             {/* Step 3: AI Classification */}
             <Card className="border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center text-xl">
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4 text-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-lg sm:text-xl">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-3 sm:mr-4 text-sm">
                     3
                   </div>
-                  <Brain className="h-6 w-6 text-blue-600 mr-3" />
-                  AI-Powered Classification
+                  <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3" />
+                  <span className="leading-tight">AI-Powered Classification</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
+              <CardContent className="pt-0">
+                <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <h4 className="font-semibold mb-2">What Happens:</h4>
-                    <ul className="space-y-2 text-gray-600">
+                    <h4 className="font-semibold mb-3 text-sm sm:text-base">What Happens:</h4>
+                    <ul className="space-y-2 sm:space-y-3 text-gray-600 text-sm sm:text-base">
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        AI analyzes sender, subject, and content
+                        <span>AI analyzes sender, subject, and content</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Detects urgency and importance patterns
+                        <span>Detects urgency and importance patterns</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Classifies as High/Medium/Low priority
+                        <span>Classifies as High/Medium/Low priority</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Filters out spam and promotions
+                        <span>Filters out spam and promotions</span>
                       </li>
                     </ul>
                   </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-gray-800">AI Capabilities:</h4>
-                    <ul className="space-y-1 text-sm text-gray-700">
+                  <div className="bg-purple-50 p-3 sm:p-4 rounded-lg mt-4 md:mt-0">
+                    <h4 className="font-semibold mb-2 text-gray-800 text-sm sm:text-base">AI Capabilities:</h4>
+                    <ul className="space-y-1 text-xs sm:text-sm text-gray-700">
                       <li>• Advanced classification</li>
                       <li>• Priority detection</li>
                       <li>• Context awareness</li>
@@ -225,41 +233,41 @@ export default function HowItWorksPage() {
 
             {/* Step 4: WhatsApp Notifications */}
             <Card className="border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center text-xl">
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4 text-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-lg sm:text-xl">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-3 sm:mr-4 text-sm">
                     4
                   </div>
-                  <MessageCircle className="h-6 w-6 text-blue-600 mr-3" />
-                  Smart WhatsApp Alerts
+                  <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3" />
+                  <span className="leading-tight">Smart WhatsApp Alerts</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
+              <CardContent className="pt-0">
+                <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <h4 className="font-semibold mb-2">What Happens:</h4>
-                    <ul className="space-y-2 text-gray-600">
+                    <h4 className="font-semibold mb-3 text-sm sm:text-base">What Happens:</h4>
+                    <ul className="space-y-2 sm:space-y-3 text-gray-600 text-sm sm:text-base">
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        Only high-priority emails trigger alerts
+                        <span>Only high-priority emails trigger alerts</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        AI creates 2-line smart summary
+                        <span>AI creates 2-line smart summary</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        WhatsApp message sent instantly
+                        <span>WhatsApp message sent instantly</span>
                       </li>
                       <li className="flex items-start">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        No spam from social/promotional emails
+                        <span>No spam from social/promotional emails</span>
                       </li>
                     </ul>
                   </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-gray-800">Message Format:</h4>
-                    <div className="text-xs font-mono bg-white p-3 rounded border">
+                  <div className="bg-green-50 p-3 sm:p-4 rounded-lg mt-4 md:mt-0">
+                    <h4 className="font-semibold mb-2 text-gray-800 text-sm sm:text-base">Message Format:</h4>
+                    <div className="text-xs font-mono bg-white p-2 sm:p-3 rounded border overflow-x-auto">
                       <div className="text-blue-600 font-bold">From: HR Team (company)</div>
                       <div className="text-gray-600">Subject: Interview Confirmation</div>
                       <div className="text-gray-600">Received: 5m ago</div>
@@ -280,18 +288,18 @@ export default function HowItWorksPage() {
         {/* Technical Architecture */}
         <Card className="mb-12">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Technical Architecture</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl text-center px-4">Technical Architecture</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-6">
+          <CardContent className="px-4 sm:px-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 
               {/* Your Device */}
               <div className="text-center">
-                <div className="bg-blue-100 p-6 rounded-lg mb-4">
-                  <Smartphone className="h-12 w-12 text-blue-600 mx-auto mb-2" />
-                  <h3 className="font-semibold">Your Device</h3>
+                <div className="bg-blue-100 p-4 sm:p-6 rounded-lg mb-4">
+                  <Smartphone className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-2" />
+                  <h3 className="font-semibold text-sm sm:text-base">Your Device</h3>
                 </div>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-xs sm:text-sm text-gray-600 space-y-1">
                   <li>• Secure browser connection</li>
                   <li>• Google OAuth authentication</li>
                   <li>• WhatsApp notifications</li>
@@ -301,11 +309,11 @@ export default function HowItWorksPage() {
 
               {/* MailSense Servers */}
               <div className="text-center">
-                <div className="bg-green-100 p-6 rounded-lg mb-4">
-                  <Server className="h-12 w-12 text-green-600 mx-auto mb-2" />
-                  <h3 className="font-semibold">MailSense Servers</h3>
+                <div className="bg-green-100 p-4 sm:p-6 rounded-lg mb-4">
+                  <Server className="h-10 w-10 sm:h-12 sm:w-12 text-green-600 mx-auto mb-2" />
+                  <h3 className="font-semibold text-sm sm:text-base">MailSense Servers</h3>
                 </div>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-xs sm:text-sm text-gray-600 space-y-1">
                   <li>• Real-time email processing</li>
                   <li>• AI classification engine</li>
                   <li>• WhatsApp message delivery</li>
@@ -314,12 +322,12 @@ export default function HowItWorksPage() {
               </div>
 
               {/* Gmail API */}
-              <div className="text-center">
-                <div className="bg-purple-100 p-6 rounded-lg mb-4">
-                  <Mail className="h-12 w-12 text-purple-600 mx-auto mb-2" />
-                  <h3 className="font-semibold">Gmail API</h3>
+              <div className="text-center sm:col-span-2 lg:col-span-1">
+                <div className="bg-purple-100 p-4 sm:p-6 rounded-lg mb-4">
+                  <Mail className="h-10 w-10 sm:h-12 sm:w-12 text-purple-600 mx-auto mb-2" />
+                  <h3 className="font-semibold text-sm sm:text-base">Gmail API</h3>
                 </div>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-xs sm:text-sm text-gray-600 space-y-1">
                   <li>• Secure API connection</li>
                   <li>• Read-only access</li>
                   <li>• Real-time email fetching</li>
@@ -328,12 +336,12 @@ export default function HowItWorksPage() {
               </div>
             </div>
 
-            <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="flex items-start space-x-3">
-                <Database className="h-6 w-6 text-gray-600 mt-0.5" />
+                <Database className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-gray-900">Data Protection</h4>
-                  <ul className="text-gray-700 text-sm mt-2 space-y-1">
+                  <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Data Protection</h4>
+                  <ul className="text-gray-700 text-xs sm:text-sm mt-2 space-y-1">
                     <li>• No email content storage</li>
                     <li>• No private message access</li>
                     <li>• No third-party data sharing</li>
@@ -346,57 +354,57 @@ export default function HowItWorksPage() {
         </Card>
 
         {/* Frequency & Performance */}
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
+        <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-12">
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Clock className="h-5 w-5 text-blue-600 mr-2" />
-                Check Frequency
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center text-lg">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2" />
+                <span className="text-sm sm:text-base">Check Frequency</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                  <span className="font-medium">WhatsApp Disabled</span>
-                  <Badge variant="outline">Every 2 minutes</Badge>
+            <CardContent className="pt-0">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 sm:p-3 bg-gray-50 rounded gap-1 sm:gap-0">
+                  <span className="font-medium text-sm sm:text-base">WhatsApp Disabled</span>
+                  <Badge variant="outline" className="text-xs w-fit">Every 2 minutes</Badge>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 rounded">
-                  <span className="font-medium">WhatsApp Enabled</span>
-                  <Badge className="bg-green-600">Every 1 minute</Badge>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 sm:p-3 bg-green-50 rounded gap-1 sm:gap-0">
+                  <span className="font-medium text-sm sm:text-base">WhatsApp Enabled</span>
+                  <Badge className="bg-green-600 text-xs w-fit">Every 1 minute</Badge>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-blue-50 rounded">
-                  <span className="font-medium">Tab Inactive</span>
-                  <Badge variant="secondary">Background checks</Badge>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 sm:p-3 bg-blue-50 rounded gap-1 sm:gap-0">
+                  <span className="font-medium text-sm sm:text-base">Tab Inactive</span>
+                  <Badge variant="secondary" className="text-xs w-fit">Background checks</Badge>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertTriangle className="h-5 w-5 text-orange-600 mr-2" />
-                Performance Features
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center text-lg">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600 mr-2" />
+                <span className="text-sm sm:text-base">Performance Features</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
+            <CardContent className="pt-0">
+              <ul className="space-y-2 sm:space-y-3">
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Smart caching prevents unnecessary API calls</span>
+                  <span className="text-xs sm:text-sm">Smart caching prevents unnecessary API calls</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Instant page navigation between Dashboard/Settings</span>
+                  <span className="text-xs sm:text-sm">Instant page navigation between Dashboard/Settings</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Background processing when tab is inactive</span>
+                  <span className="text-xs sm:text-sm">Background processing when tab is inactive</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Automatic cleanup of old cached data</span>
+                  <span className="text-xs sm:text-sm">Automatic cleanup of old cached data</span>
                 </li>
               </ul>
             </CardContent>
@@ -406,66 +414,66 @@ export default function HowItWorksPage() {
         {/* User Control */}
         <Card className="mb-12">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">You're Always in Control</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl text-center px-4">You're Always in Control</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-8">
+          <CardContent className="px-4 sm:px-6">
+            <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
 
               <div>
-                <h3 className="font-semibold text-lg mb-4 flex items-center">
-                  <Shield className="h-5 w-5 text-green-600 mr-2" />
+                <h3 className="font-semibold text-base sm:text-lg mb-4 flex items-center">
+                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-2" />
                   Privacy Controls
                 </h3>
-                <ul className="space-y-3">
+                <ul className="space-y-3 sm:space-y-4">
                   <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
-                      <div className="font-medium">Revoke Access Anytime</div>
-                      <div className="text-sm text-gray-600">Go to Google Account settings → Security → Third-party apps</div>
+                      <div className="font-medium text-sm sm:text-base">Revoke Access Anytime</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Go to Google Account settings → Security → Third-party apps</div>
                     </div>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
-                      <div className="font-medium">View Cached Data</div>
-                      <div className="text-sm text-gray-600">See exactly what metadata is temporarily stored</div>
+                      <div className="font-medium text-sm sm:text-base">View Cached Data</div>
+                      <div className="text-xs sm:text-sm text-gray-600">See exactly what metadata is temporarily stored</div>
                     </div>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
-                      <div className="font-medium">Clear All Data</div>
-                      <div className="text-sm text-gray-600">One-click deletion of all cached information</div>
+                      <div className="font-medium text-sm sm:text-base">Clear All Data</div>
+                      <div className="text-xs sm:text-sm text-gray-600">One-click deletion of all cached information</div>
                     </div>
                   </li>
                 </ul>
               </div>
 
               <div>
-                <h3 className="font-semibold text-lg mb-4 flex items-center">
-                  <MessageCircle className="h-5 w-5 text-blue-600 mr-2" />
+                <h3 className="font-semibold text-base sm:text-lg mb-4 flex items-center">
+                  <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2" />
                   Notification Controls
                 </h3>
-                <ul className="space-y-3">
+                <ul className="space-y-3 sm:space-y-4">
                   <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
-                      <div className="font-medium">Enable/Disable WhatsApp</div>
-                      <div className="text-sm text-gray-600">Toggle notifications on/off anytime</div>
+                      <div className="font-medium text-sm sm:text-base">Enable/Disable WhatsApp</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Toggle notifications on/off anytime</div>
                     </div>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
-                      <div className="font-medium">Change Phone Number</div>
-                      <div className="text-sm text-gray-600">Update WhatsApp number in settings</div>
+                      <div className="font-medium text-sm sm:text-base">Change Phone Number</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Update WhatsApp number in settings</div>
                     </div>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
-                      <div className="font-medium">Test Notifications</div>
-                      <div className="text-sm text-gray-600">Send test messages to verify setup</div>
+                      <div className="font-medium text-sm sm:text-base">Test Notifications</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Send test messages to verify setup</div>
                     </div>
                   </li>
                 </ul>
@@ -476,23 +484,23 @@ export default function HowItWorksPage() {
 
         {/* CTA */}
         <Card className="text-center bg-gray-50 border-gray-200">
-          <CardContent className="p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <CardContent className="p-6 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Get Started with MailSense
             </h2>
-            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto text-sm sm:text-base px-4">
               Professional email summarization for business users
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                  <Mail className="mr-2 h-5 w-5" />
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+              <Link href="/" className="w-full sm:w-auto">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm sm:text-base">
+                  <Mail className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                   Connect Gmail Account
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </Link>
-              <Link href="/privacy">
-                <Button variant="outline" size="lg" className="bg-white">
+              <Link href="/privacy" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="bg-white w-full sm:w-auto text-sm sm:text-base">
                   Privacy Policy
                 </Button>
               </Link>

@@ -1,20 +1,22 @@
 "use client"
 
+import { useState, useMemo } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useGmail } from "@/hooks/use-gmail"
 import { AuthGuard } from "@/components/auth-guard"
 import { Navigation } from "@/components/navigation"
+import { AIAssistant } from "@/components/ai-assistant"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, BarChart3, TrendingUp, Brain, Zap, Mail, Clock, User, Target } from "lucide-react"
 import Link from "next/link"
 import { EmailClassifier } from "@/lib/ai-classifier"
-import { useMemo } from "react"
 
 export default function InsightsPage() {
   const { user, logout } = useAuth()
   const { emails, loading, highPriorityEmails, unreadCount, totalCount } = useGmail()
+  const [showAIAssistant, setShowAIAssistant] = useState(false)
 
   const classifier = new EmailClassifier()
   
@@ -312,6 +314,13 @@ export default function InsightsPage() {
             </div>
           )}
         </div>
+
+        {/* AI Assistant */}
+        <AIAssistant 
+          emails={emails}
+          isVisible={showAIAssistant}
+          onToggle={() => setShowAIAssistant(!showAIAssistant)}
+        />
       </div>
     </AuthGuard>
   )
