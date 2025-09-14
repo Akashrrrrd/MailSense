@@ -19,33 +19,33 @@ export default function HomePage() {
           <div className="max-w-5xl mx-auto text-center">
             {/* Hero Section */}
             <div className="mb-12 lg:mb-16">
-              <div className="flex items-center justify-center mb-6 lg:mb-8">
+              <div className="flex flex-col sm:flex-row items-center justify-center mb-6 lg:mb-8">
                 <img 
                   src="/logo.png" 
                   alt="MailSense Logo" 
-                  className="h-20 w-20 sm:h-28 sm:w-28 lg:h-32 lg:w-32 mr-6"
+                  className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 mb-4 sm:mb-0 sm:mr-4"
                 />
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 text-center sm:text-left">
                   MailSense
                 </h1>
               </div>
-              <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-8 lg:mb-10 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-8 lg:mb-10 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0">
                 Professional email summarization with AI-powered insights delivered directly to WhatsApp.
               </p>
               
               {/* Trust Indicators */}
-              <div className="flex flex-wrap justify-center gap-4 lg:gap-6 mb-8 lg:mb-12">
-                <div className="flex items-center space-x-2 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
-                  <Lock className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">Secure Processing</span>
+              <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 lg:gap-6 mb-8 lg:mb-12 px-4 sm:px-0">
+                <div className="flex items-center justify-center space-x-2 bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-200 shadow-sm">
+                  <Lock className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">Secure Processing</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
-                  <Shield className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">Enterprise Security</span>
+                <div className="flex items-center justify-center space-x-2 bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-200 shadow-sm">
+                  <Shield className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">Enterprise Security</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
-                  <Eye className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">Read-Only Access</span>
+                <div className="flex items-center justify-center space-x-2 bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-200 shadow-sm">
+                  <Eye className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">Read-Only Access</span>
                 </div>
               </div>
             </div>
@@ -95,12 +95,12 @@ export default function HomePage() {
             </div>
 
             {/* CTA Section */}
-            <Card className="border border-gray-200 bg-white mb-8">
-              <CardContent className="p-8 lg:p-12">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <Card className="border border-gray-200 bg-white mb-8 mx-4 sm:mx-0">
+              <CardContent className="p-6 sm:p-8 lg:p-12">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 text-center">
                   Get Started with MailSense
                 </h2>
-                <p className="text-gray-600 mb-8 text-lg">
+                <p className="text-gray-600 mb-6 sm:mb-8 text-base sm:text-lg text-center max-w-2xl mx-auto">
                   Connect your Gmail account to start receiving AI-powered email summaries on WhatsApp.
                 </p>
 
@@ -114,7 +114,7 @@ export default function HomePage() {
                   onClick={login}
                   disabled={loading}
                   size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg min-h-[48px]"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg min-h-[48px] w-full sm:w-auto"
                 >
                   {loading ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
