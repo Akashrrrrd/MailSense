@@ -1,0 +1,86 @@
+#!/bin/sh
+
+# MailSense Pre-push Hook
+# Ensures code quality and security before pushing to the remote repository
+
+echo "📧 Running MailSense pre-push checks..."
+
+# Check for MailSense specific configurations
+if [ ! -f ".env.example" ]; then
+    echo "❌ Missing .env.example file. This is required for MailSense configuration."
+    exit 1
+fi
+
+# Verify email templates exist
+if [ ! -d "emails/templates" ]; then
+    echo "⚠️  Email templates directory not found. Create one if sending emails is required."
+fi
+
+# Check for required environment variables in .env.example
+REQUIRED_ENV_VARS=(
+  "MAIL_PROVIDER"
+  "DATABASE_URL"
+  "NEXTAUTH_SECRET"
+  "NEXTAUTH_URL"
+)
+
+for var in "${REQUIRED_ENV_VARS[@]}"; do
+  if ! grep -q "^$var=" .env.example; then
+    echo "⚠️  Missing $var in .env.example. This is required for MailSense."
+  }
+fi
+
+# Function to print error messages in red
+print_error() {
+    echo "\033[0;31m✖ $1\033[0m"
+}
+
+# Function to print success messages in green
+print_success() {
+    echo "\033[0;32m✓ $1\033[0m"
+}
+
+# 1. Ensure all tests pass
+print_success "Running test suite..."
+npm test -- --watchAll=false --coverage
+if [ $? -ne 0 ]; then
+    print_error "Tests failed. Please fix the failing tests before pushing."
+    exit 1
+fi
+
+# 2. Check for console.log statements in production code
+print_success "Checking for console.log statements..."
+FILES_WITH_CONSOLE=$(find src -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' \) -exec grep -l "console\.log" {} \;)
+if [ ! -z "$FILES_WITH_CONSOLE" ]; then
+    print_error "Found console.log statements in the following files:"
+    echo "$FILES_WITH_CONSOLE" | sed 's/^/  /'
+    echo "\nPlease remove these before pushing to production."
+    exit 1
+fi
+
+# 3. Check for large files
+print_success "Checking for large files..."
+LARGE_FILES=$(find . -type f -size +5M -not -path "./node_modules/*" -not -path "./.git/*" -not -path "./dist/*" -not -path "./build/*")
+if [ ! -z "$LARGE_FILES" ]; then
+    print_error "Found large files (>5MB) in the repository:"
+    echo "$LARGE_FILES" | sed 's/^/  /'
+    echo "\nPlease ensure large files are properly gitignored or stored elsewhere."
+    exit 1
+fi
+
+# 4. Check for environment variables
+print_success "Checking for missing environment variables..."
+if [ ! -f ".env.local" ]; then
+    print_error "Missing .env.local file. Please create one from .env.example"
+    exit 1
+fi
+
+# 5. Check for uncommitted changes
+print_success "Checking for uncommitted changes..."
+if ! git diff-index --quiet HEAD --; then
+    print_error "You have uncommitted changes. Please commit or stash them before pushing."
+    exit 1
+fi
+
+print_success "All pre-push checks passed! 🎉"
+exit 0

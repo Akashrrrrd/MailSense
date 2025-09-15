@@ -1,0 +1,86 @@
+#!/bin/sh
+
+# MailSense Pre-commit Hook
+# Ensures code quality for our email management platform
+
+echo "📧 Running MailSense pre-commit checks..."
+
+echo "🔍 Checking for MailSense-specific patterns..."
+
+# Check for hardcoded email addresses in code
+HARDCODED_EMAILS=$(git diff --cached --name-only | xargs grep -l -E '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b' 2>/dev/null || true)
+if [ ! -z "$HARDCODED_EMAILS" ]; then
+    echo "❌ Found potential hardcoded email addresses in:"
+    echo "$HARDCODED_EMAILS" | sed 's/^/  /'
+    echo "\nPlease use environment variables for email configurations."
+    exit 1
+fi
+
+# Check for sensitive data in code
+SENSITIVE_KEYS=$(git diff --cached --name-only | xargs grep -l -E '(api[_-]?key|secret|password|token|auth|credential)[\s=:]+[\"\']?[A-Za-z0-9]{16,}[\"\']?' 2>/dev/null || true)
+if [ ! -z "$SENSITIVE_KEYS" ]; then
+    echo "❌ Found potential sensitive data in:"
+    echo "$SENSITIVE_KEYS" | sed 's/^/  /'
+    echo "\nPlease remove or properly secure sensitive information."
+    exit 1
+fi
+
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Function to print error messages in red
+print_error() {
+    echo "\033[0;31m✖ $1\033[0m"
+}
+
+# Function to print success messages in green
+print_success() {
+    echo "\033[0;32m✓ $1\033[0m"
+}
+
+# 1. Check for TODO/FIXME comments in staged files
+TODOS=$(git diff --cached --name-only | \
+    xargs grep -l -E 'TODO|FIXME' 2>/dev/null)
+
+if [ ! -z "$TODOS" ]; then
+    print_error "Found TODO/FIXME comments in staged files:"
+    echo "$TODOS" | sed 's/^/  /'
+    echo "\nPlease address these before committing."
+    exit 1
+fi
+
+# 2. Run TypeScript type checking
+print_success "Running TypeScript type check..."
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+    print_error "TypeScript type check failed. Please fix the errors before committing."
+    exit 1
+fi
+
+# 3. Run ESLint on staged files
+print_success "Running ESLint on staged files..."
+npx eslint $(git diff --cached --name-only --diff-filter=ACMR "*.{js,jsx,ts,tsx}" | xargs)
+if [ $? -ne 0 ]; then
+    print_error "ESLint found issues. Please fix them before committing."
+    exit 1
+fi
+
+# 4. Run Prettier on staged files
+print_success "Running Prettier on staged files..."
+npx prettier --check $(git diff --cached --name-only --diff-filter=ACMR "*.{js,jsx,ts,tsx,json,css,scss,md}" | xargs)
+if [ $? -ne 0 ]; then
+    print_error "Code formatting issues found. Run 'npx prettier --write' to fix them."
+    exit 1
+fi
+
+# 5. Run tests
+print_success "Running tests..."
+npm test -- --watchAll=false
+if [ $? -ne 0 ]; then
+    print_error "Tests failed. Please fix the failing tests before committing."
+    exit 1
+fi
+
+print_success "All pre-commit checks passed!"
+exit 0

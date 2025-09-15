@@ -1,0 +1,64 @@
+#!/bin/sh
+
+# Kiro Post-merge Hook
+# This hook runs after a successful git merge
+
+echo "🔄 Running post-merge tasks..."
+
+# Function to print info messages in blue
+print_info() {
+    echo "\033[0;34mℹ $1\033[0m"
+}
+
+# 1. Install/update dependencies
+print_info "Checking for package updates..."
+if [ -f "package-lock.json" ] || [ -f "yarn.lock" ] || [ -f "pnpm-lock.yaml" ]; then
+    # Check if package.json was modified in the merge
+    if git diff --name-only HEAD@{1} HEAD | grep -q "package\.json"; then
+        print_info "package.json was updated. Installing dependencies..."
+        
+        # Use the appropriate package manager
+        if [ -f "pnpm-lock.yaml" ]; then
+            pnpm install --frozen-lockfile
+        elif [ -f "yarn.lock" ]; then
+            yarn install --frozen-lockfile
+        else
+            npm ci
+        fi
+        
+        if [ $? -ne 0 ]; then
+            echo "❌ Failed to install dependencies. Please run 'npm install' manually."
+            exit 1
+        fi
+    fi
+fi
+
+# 2. Update environment variables if needed
+if [ -f ".env.example" ] && [ ! -f ".env.local" ]; then
+    print_info "Copying .env.example to .env.local..."
+    cp .env.example .env.local
+    echo "⚠️  Please update .env.local with your configuration"
+fi
+
+# 3. Run database migrations if any
+if [ -f "prisma/schema.prisma" ]; then
+    print_info "Checking for database migrations..."
+    npx prisma generate
+    npx prisma migrate deploy
+fi
+
+# 4. Rebuild if needed
+print_info "Rebuilding project..."
+npm run build
+
+# 5. Clear caches
+print_info "Clearing caches..."
+npm run clear-cache || true
+
+# 6. Update git hooks
+print_info "Updating git hooks..."
+git config core.hooksPath .kiro/hooks
+chmod +x .kiro/hooks/*
+
+echo "✅ Post-merge tasks completed successfully!"
+exit 0

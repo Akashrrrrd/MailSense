@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# MailSense Commit Message Hook
+# Ensures consistent and meaningful commit messages for our email platform
+
+# Get the commit message from the file passed as first argument
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# MailSense specific commit validation
+echo "📧 Validating commit message for MailSense..."
+
+# Check for JIRA ticket reference (if using JIRA)
+if ! echo "$COMMIT_MSG" | grep -qE '(MS-[0-9]+|NO-?JIRA)'; then
+    echo "⚠️  Consider including a JIRA ticket reference (MS-XXX) or NO-JIRA"
+    echo "   Example: 'feat(inbox): MS-123 Add email filtering'"
+    # Don't fail, just warn
+fi
+
+# Check for common email-related terms that might need more context
+if echo "$COMMIT_MSG" | grep -qiE '(email|inbox|send|receive|attachment)'; then
+    if ! echo "$COMMIT_MSG" | grep -qE '\[email|inbox|send|receive|attachment\]'; then
+        echo "ℹ️  Consider adding more context for email-related changes"
+        echo "   Example: '[email] Fix attachment download for large files'"
+    }
+fi
+
+# Define the commit message regex pattern
+# Format: <type>(<scope>): <subject>
+# Example: feat(auth): add login functionality
+COMMIT_MSG_PATTERN='^(feat|fix|docs|style|refactor|test|chore|ci|perf)(\([a-z0-9-]+\))?: .{1,72}$'
+
+# Check if the commit message matches the pattern
+if ! echo "$COMMIT_MSG" | grep -qE "$COMMIT_MSG_PATTERN"; then
+    echo "❌ Invalid commit message format!"
+    echo ""
+    echo "Commit message must follow this format:"
+    echo "<type>(<scope>): <subject>"
+    echo ""
+    echo "Types: feat, fix, docs, style, refactor, test, chore, ci, perf"
+    echo "Example: feat(auth): add login functionality"
+    echo ""
+    echo "Your commit message:"
+    echo "$COMMIT_MSG"
+    exit 1
+fi
+
+# Check message length
+if [ "${#COMMIT_MSG}" -gt 100 ]; then
+    echo "❌ Commit message is too long (max 100 characters)"
+    exit 1
+fi
+
+echo "✅ Commit message is valid"
+exit 0
