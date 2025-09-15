@@ -453,7 +453,7 @@ Powered by MailSense AI`
     return `New message from ${senderName}.\nRegarding: ${shortSubject}`
   }
 
-  private cleanAISummary(summary: string): string {
+  private cleanAISummary(summary: string | null | undefined): string | null {
     if (!summary || typeof summary !== 'string') {
       return null
     }

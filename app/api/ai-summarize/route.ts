@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('[AI Summarize] Error:', error.message)
     
-    // Basic fallback
-    const basicSummary = `Important email received from ${from.split('<')[0].trim() || 'sender'}\nSubject: ${subject || 'No subject'}`
+    // Basic fallback with safe defaults
+    const basicSummary = 'Important email received\nPlease check the full email for details.'
     
     return NextResponse.json({
       success: true,

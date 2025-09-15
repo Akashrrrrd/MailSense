@@ -7,8 +7,21 @@
 /coverage
 
 # next.js
-/.next/
-/out/
+.next/
+!.gitkeep
+out/
+**/.next/
+**/out/
+**/.next/cache/
+**/.next/standalone/
+**/.next/trace
+**/.next/trace-events*
+**/.next/types/
+**/.next/server/
+**/.next/static/
+**/.next/build-manifest.*.json
+**/.next/prerender-manifest.json
+**/.next/routes-manifest.json
 
 # production
 /build
@@ -25,6 +38,8 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+!.env.example
+.env.*.local
 
 # vercel
 .vercel

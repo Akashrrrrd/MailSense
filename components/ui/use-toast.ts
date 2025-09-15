@@ -3,10 +3,17 @@
 // Inspired by react-hot-toast library
 import * as React from "react"
 
-import type {
-  ToastActionElement,
-  ToastProps,
-} from "@/components/ui/toast"
+import type { ToastActionElement } from "@/components/ui/toast"
+
+type ToastProps = {
+  id: string
+  title?: string
+  description?: string
+  action?: ToastActionElement
+  variant?: 'default' | 'destructive' | 'success'
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -158,9 +165,12 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
+      onOpenChange: (open: boolean) => {
+        if (!open) {
+          // Use the dismiss function we already have
+          dismiss()
+        }
+      }
     },
   })
 

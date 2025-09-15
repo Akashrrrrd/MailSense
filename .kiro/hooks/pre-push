@@ -27,8 +27,8 @@ REQUIRED_ENV_VARS=(
 for var in "${REQUIRED_ENV_VARS[@]}"; do
   if ! grep -q "^$var=" .env.example; then
     echo "⚠️  Missing $var in .env.example. This is required for MailSense."
-  }
-fi
+  fi
+done
 
 # Function to print error messages in red
 print_error() {
